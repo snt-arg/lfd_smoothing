@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import json
 
 from pydrake.all import *
 
@@ -67,7 +68,7 @@ class Demonstration:
             start += n - overlap
         return np.array(segments)
     
-    def read_from_file(self,filename):
+    def read_from_pickle(self,filename):
         with open(filename, 'rb') as file:
             demonstration = pickle.load(file)
         
@@ -102,3 +103,25 @@ class Demonstration:
         self.positions = positions
         self.orientations = orientations
         (self.length, self.num_q) = ys.shape
+    
+    
+    def export_as_json(self, filename):
+        obj = {"ts" : self.ts.tolist(),
+               "ys" : self.ys.tolist(),
+               "positions" : self.positions.tolist(),
+               "orientations" : self.orientations.tolist()
+               }
+        with open(filename, 'w') as file:
+            file.write(json.dumps(obj))
+     
+            
+    def read_from_json(self, filename):
+        with open(filename, "r") as file:
+            obj = json.loads(file.read())
+        
+        self.ts = np.array(obj["ts"])
+        self.ys = np.array(obj["ys"])
+        self.positions = np.array(obj["positions"])
+        self.orientations = np.array(obj["orientations"])
+        (self.length, self.num_q) = self.ys.shape
+        

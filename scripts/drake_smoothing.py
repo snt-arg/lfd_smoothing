@@ -10,7 +10,7 @@ from pydrake.all import *
 thr_translation = 0.01
 
 demo = Demonstration()
-demo.read_from_file(filename='demo_samples/00.pickle')
+demo.read_from_json(filename='demo_samples/json/00.json')
 demo.filter(thr_translation=thr_translation)
 
 robot = FR3Drake(franka_pkg_xml="/home/abrk/thesis/drake/franka_drake/package.xml",
