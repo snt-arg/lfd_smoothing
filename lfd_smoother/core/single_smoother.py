@@ -26,16 +26,16 @@ class SingleSmoother(TrajectorySmoother):
 
         for (i,timing) in enumerate(self.ntimings):
             self._add_pose_constraint(self.trajopts[0], self.waypoints[0,i],
-                                      self.tol_translation, self.tol_rotation,timing)
+                                      self.config.tol_translation, self.config.tol_rotation,timing)
 
     def solve(self):
         self._solve(self.progs[0])
 
     def add_joint_cp_error_cost(self):
         num_q = self.robot.plant.num_positions()
-        for j in range(0, self.num_control_points):
+        for j in range(0, self.config.num_control_points):
             self.progs[0].AddQuadraticErrorCost(
-                self.coeff_joint_cp_error*np.eye(num_q), self.demo.ys[0,j], 
+                self.config.coeff_joint_cp_error*np.eye(num_q), self.demo.ys[0,j], 
                 self.trajopts[0].control_points()[:, j]
             )
 
@@ -45,7 +45,7 @@ class SingleSmoother(TrajectorySmoother):
         for i in range(1,len(ts)):
             jerk = self.sym_rjerk[0].value(ts[i])
             dt = ts[i] - ts[i-1]
-            cost += matmul(jerk.transpose(),jerk)[0,0] * dt * self.coeff_jerk * pow(self.trajopts[0].duration(),6) / (len(ts)*self.robot.plant.num_positions())
+            cost += matmul(jerk.transpose(),jerk)[0,0] * dt * self.config.coeff_jerk * pow(self.trajopts[0].duration(),6) / (len(ts)*self.robot.plant.num_positions())
             
         self.jerk_cost = self.progs[0].AddCost(cost)
 
@@ -56,6 +56,6 @@ class SingleSmoother(TrajectorySmoother):
         for i in range(1,len(ts)):
             vel = self.sym_rvel[0].value(ts[i])
             dt = ts[i] - ts[i-1]
-            cost += matmul((limit-vel).transpose(),(limit+vel))[0,0] * dt * self.coeff_vel / (len(ts)*self.robot.plant.num_positions())
+            cost += matmul((limit-vel).transpose(),(limit+vel))[0,0] * dt * self.config.coeff_vel / (len(ts)*self.robot.plant.num_positions())
 
         self.vel_cost = self.progs[0].AddCost(cost)

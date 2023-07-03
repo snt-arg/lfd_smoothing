@@ -1,0 +1,10 @@
+num_cps: 4
+bspline_order: 4
+wp_per_segment: 2
+overlap: 1
+velocity_scaling: 1
+duration_bound: [0.01,5]
+coeff_duration: 1
+tol_joint: 0
+solver_log: "/tmp/trajopt1.txt"
+plot: true

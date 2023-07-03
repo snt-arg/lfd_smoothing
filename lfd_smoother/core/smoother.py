@@ -7,73 +7,73 @@ from manipulation.meshcat_utils import PublishPositionTrajectory
 
 class TrajectorySmoother:
 
-    def __init__(self, robot, config : dict):
+    def __init__(self, robot, config):
         self.robot = robot
         self.config = config
-        self.num_control_points = config["num_cps"]
-        self.bspline_order = config["bspline_order"]
-        self.demo = config.get("demo", None)
-        self.wp_per_segment = config.get("wp_per_segment", self.num_control_points)
-        self.overlap = config.get("overlap", 0)
+        # self.num_control_points = config["num_cps"]
+        # self.bspline_order = config["bspline_order"]
+        # self.demo = config.get("demo", None)
+        # self.wp_per_segment = config.get("wp_per_segment", self.num_control_points)
+        # self.overlap = config.get("overlap", 0)
         
-        self.vel_bound = config.get("bound_velocity", None)
-        self.acc_bound = config.get("bound_acceleration", None)
-        self.jerk_bound = config.get("bound_jerk", None)
-        self.duration_bound = config.get("bound_duration", None)
+        # self.vel_bound = config.get("bound_velocity", None)
+        # self.acc_bound = config.get("bound_acceleration", None)
+        # self.jerk_bound = config.get("bound_jerk", None)
+        # self.duration_bound = config.get("bound_duration", None)
 
-        self.coeff_duration = config.get("coeff_duration", None)
-        self.coeff_jerk = config.get("coeff_jerk", None)
-        self.coeff_joint_cp_error = config.get("coeff_joint_cp_error", None)
-        self.coeff_vel = config.get("coeff_vel", None)
+        # self.coeff_duration = config.get("coeff_duration", None)
+        # self.coeff_jerk = config.get("coeff_jerk", None)
+        # self.coeff_joint_cp_error = config.get("coeff_joint_cp_error", None)
+        # self.coeff_vel = config.get("coeff_vel", None)
 
-        self.tol_joint = config.get("tol_joint", None)
-        self.tol_translation = config.get("tol_translation", None)
-        self.tol_rotation = config.get("tol_rotation", None)
+        # self.tol_joint = config.get("tol_joint", None)
+        # self.tol_translation = config.get("tol_translation", None)
+        # self.tol_rotation = config.get("tol_rotation", None)
 
-        self.init_guess_cps = config.get("init_guess_cps", None)
-        self.waypoints_ts = config.get("waypoints_ts", None)
+        # self.init_guess_cps = config.get("init_guess_cps", None)
+        # self.waypoints_ts = config.get("waypoints_ts", None)
 
-        self.doplot = config.get("plot", True)
+        # self.doplot = config.get("plot", True)
 
-        self.solver = config.get("solver", None)
-        self.solver_log = config.get("solver_log", "/tmp/trajopt.txt")
+        # self.solver = config.get("solver", None)
+        # self.solver_log = config.get("solver_log", "/tmp/trajopt.txt")
 
     def run(self):
-        if self.demo is not None: self.input_demo()
+        if self.config.demo is not None: self.input_demo()
         self.init_trajopts()
         self.add_pos_bounds()
-        if self.waypoints_ts is not None: self.import_waypoints_ts(self.waypoints_ts)
-        if self.vel_bound is not None: self.add_vel_bounds()
-        if self.acc_bound is not None: self.add_acc_bounds()
-        if self.jerk_bound is not None: self.add_jerk_bounds()
-        if self.duration_bound is not None: self.add_duration_bound()
-        if self.coeff_duration is not None: self.add_duration_cost()
-        if self.tol_joint is not None: self.add_joint_constraints()
-        if self.tol_translation is not None and self.tol_rotation is not None: self.add_task_constraints()
-        if self.coeff_jerk is not None: self.add_jerk_cost()
-        if self.coeff_joint_cp_error is not None: self.add_joint_cp_error_cost()
-        if self.coeff_vel is not None: self.add_vel_cost()
+        if self.config.waypoints_ts is not None: self.import_waypoints_ts(self.config.waypoints_ts)
+        if self.config.vel_bound is not None: self.add_vel_bounds()
+        if self.config.acc_bound is not None: self.add_acc_bounds()
+        if self.config.jerk_bound is not None: self.add_jerk_bounds()
+        if self.config.duration_bound is not None: self.add_duration_bound()
+        if self.config.coeff_duration is not None: self.add_duration_cost()
+        if self.config.tol_joint is not None: self.add_joint_constraints()
+        if self.config.tol_translation is not None and self.config.tol_rotation is not None: self.add_task_constraints()
+        if self.config.coeff_jerk is not None: self.add_jerk_cost()
+        if self.config.coeff_joint_cp_error is not None: self.add_joint_cp_error_cost()
+        if self.config.coeff_vel is not None: self.add_vel_cost()
         if self.num_segments > 1: self.join_trajopts()
-        if self.init_guess_cps is not None: self.set_init_guess_cps(self.init_guess_cps)
+        if self.config.init_guess_cps is not None: self.set_init_guess_cps(self.config.init_guess_cps)
         self.solve()
         result_traj = self.compile_trajectory()
-        if self.doplot is True: self.plot_trajectory(result_traj)
+        if self.config.doplot is True: self.plot_trajectory(result_traj)
 
 
 
     def input_demo(self):
 
-        self.demo = copy.deepcopy(self.demo)
-        self.demo.divisible_by(self.wp_per_segment, self.overlap)
+        self.demo = copy.deepcopy(self.config.demo)
+        self.demo.divisible_by(self.config.wp_per_segment, self.config.overlap)
         self.waypoints = []
         self.set_waypoints(self.demo)
         self._segment_demo()
     
     def _segment_demo(self):
-        step = self.wp_per_segment
-        self.demo.reshape(step, self.overlap)
+        step = self.config.wp_per_segment
+        self.demo.reshape(step, self.config.overlap)
         self.waypoints = self.demo.split_into_segments(np.array(self.waypoints), 
-                                                  step, self.overlap)
+                                                  step, self.config.overlap)
         self.num_segments = self.demo.num_segments
 
     def _make_symbolic(self):
@@ -93,7 +93,7 @@ class TrajectorySmoother:
         control_points = trajopt.control_points()
         ufunc = np.vectorize(Expression)
         control_points_exp = [ufunc(control_points[:,i,np.newaxis]) 
-                              for i in range(self.num_control_points)]
+                              for i in range(self.config.num_control_points)]
         basis_exp = BsplineBasis_[Expression](trajopt.basis().order(), 
                                               trajopt.basis().knots())  
         return BsplineTrajectory_[Expression](basis_exp,control_points_exp)
@@ -107,31 +107,31 @@ class TrajectorySmoother:
     def add_vel_bounds(self):
         for trajopt in self.trajopts:
             trajopt.AddVelocityBounds(
-                self.vel_bound[0],
-                self.vel_bound[1]
+                self.config.vel_bound[0],
+                self.config.vel_bound[1]
             )
     def add_acc_bounds(self):
         for trajopt in self.trajopts:
             trajopt.AddAccelerationBounds(
-                self.acc_bound[0],
-                self.acc_bound[1]
+                self.config.acc_bound[0],
+                self.config.acc_bound[1]
             )
     def add_jerk_bounds(self):
         for trajopt in self.trajopts:
             trajopt.AddJerkBounds(
-                self.jerk_bound[0],
-                self.jerk_bound[1]
+                self.config.jerk_bound[0],
+                self.config.jerk_bound[1]
             )
 
     def add_duration_bound(self):
         for trajopt in self.trajopts:
-            trajopt.AddDurationConstraint(self.duration_bound[0],
-                                          self.duration_bound[1])
+            trajopt.AddDurationConstraint(self.config.duration_bound[0],
+                                          self.config.duration_bound[1])
 
 
     def add_duration_cost(self):
         for trajopt in self.trajopts:
-            trajopt.AddDurationCost(self.coeff_duration)
+            trajopt.AddDurationCost(self.config.coeff_duration)
 
 
     def init_trajopts(self):
@@ -140,8 +140,8 @@ class TrajectorySmoother:
              
         for _ in range(self.num_segments):
             trajopt = KinematicTrajectoryOptimization(self.robot.plant.num_positions(), 
-                                                    self.num_control_points,
-                                                    spline_order=self.bspline_order)
+                                                    self.config.num_control_points,
+                                                    spline_order=self.config.bspline_order)
             self.trajopts.append(trajopt)
             self.progs.append(trajopt.get_mutable_prog())
         
@@ -152,7 +152,7 @@ class TrajectorySmoother:
         for i in range(self.num_segments):
             cps = self.sym_rjerk[i].control_points()
             for j in range(len(cps)):
-                self.progs[i].AddCost(matmul(cps[j].transpose(),cps[j])[0,0] * self.coeff_jerk 
+                self.progs[i].AddCost(matmul(cps[j].transpose(),cps[j])[0,0] * self.config.coeff_jerk 
                                       / pow(self.trajopts[i].duration(),5) # Order is one less than expected (6) because of Jdt
                                       / (len(cps)*self.num_segments*self.robot.plant.num_positions()))
     
@@ -168,15 +168,15 @@ class TrajectorySmoother:
         self._add_joint_constraint(self.trajopts[-1], self.demo.ys[-1,-1], 0, 1, rest=True)
 
         for i in range(0,self.num_segments - 1):
-            self._add_joint_constraint(self.trajopts[i], self.demo.ys[i,-1], self.tol_joint, 1)
+            self._add_joint_constraint(self.trajopts[i], self.demo.ys[i,-1], self.config.tol_joint, 1)
     
-    def add_joint_cp_error_cost(self, coeff):
+    def add_joint_cp_error_cost(self):
         num_q = self.robot.plant.num_positions()
         if self.wp_per_segment == self.num_control_points:
             for i in range(0,self.num_segments):
                 for j in range(1, self.num_control_points):
                     self.progs[i].AddQuadraticErrorCost(
-                        coeff*np.eye(num_q), self.demo.ys[i,j], self.trajopts[i].control_points()[:, j]
+                        self.config.coeff_joint_cp_error*np.eye(num_q), self.demo.ys[i,j], self.trajopts[i].control_points()[:, j]
                     )
         else:
             print ("num_control_points is not equal to wp_per_segment, ignoring joint_cp_error_cost")    
@@ -226,7 +226,7 @@ class TrajectorySmoother:
 
         for i in range(0,self.num_segments-1):
             self._add_pose_constraint(self.trajopts[i], self.waypoints[i,-1], 
-                                      self.tol_translation, self.tol_rotation, 1)
+                                      self.config.tol_translation, self.config.tol_rotation, 1)
     
     def add_vel_cost(self):
         raise NotImplementedError()
@@ -257,12 +257,12 @@ class TrajectorySmoother:
     
     def _solve(self,prog):
         solver_options = SolverOptions()
-        solver_options.SetOption(CommonSolverOption.kPrintFileName, self.solver_log)
+        solver_options.SetOption(CommonSolverOption.kPrintFileName, self.config.solver_log)
 
-        if self.solver is None:
+        if self.config.solver is None:
             self.result = Solve(prog, solver_options=solver_options)
         else:
-            self.result = self.solver.Solve(prog, solver_options=solver_options)
+            self.result = self.config.solver.Solve(prog, solver_options=solver_options)
         self.success = self.result.is_success()
         if not self.success:
             print("Optimization Failed")
@@ -293,7 +293,7 @@ class TrajectorySmoother:
         
         return duration, BsplineTrajectory(
             BsplineBasis(basis.order(), scaled_knots),
-            [result.GetSolution(trajopt.control_points())[:,i,np.newaxis] for i in range(self.num_control_points)])
+            [result.GetSolution(trajopt.control_points())[:,i,np.newaxis] for i in range(self.config.num_control_points)])
     
     def plot_trajectory(self, composite_traj):
 
