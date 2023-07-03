@@ -1,0 +1,3 @@
+[submodule "drake/franka_drake"]
+	path = drake/franka_drake
+	url = https://github.com/snt-arg/franka_drake.git
