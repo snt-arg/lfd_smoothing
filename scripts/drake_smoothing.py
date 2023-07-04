@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import yaml
-
 from pydrake.all import *
 
 from lfd_smoother.core.smoother import TrajectorySmoother
