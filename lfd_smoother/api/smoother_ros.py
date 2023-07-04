@@ -12,8 +12,9 @@ import yaml
 class ROSSmoother:
 
     def __init__(self, config_path):
-        with open(config_path, "r") as file:
-            self.config = yaml.safe_load(file)
+        self.config = config
+        # with open(config_path, "r") as file:
+        #     self.config = yaml.safe_load(file)
 
     def run(self, demonstration):
 
