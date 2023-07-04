@@ -72,6 +72,9 @@ class Demonstration:
         with open(filename, 'rb') as file:
             demonstration = pickle.load(file)
         
+        self.read_from_ros(demonstration)
+
+    def read_from_ros(self,demonstration):    
         joint_trajectory = demonstration.joint_trajectory
 
         n_time_steps = len(joint_trajectory.points)
