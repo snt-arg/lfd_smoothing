@@ -32,7 +32,7 @@ class ROSSmoother:
         initial_guess = self.smoother.export_cps()
         timings = self.smoother.export_waypoint_ts()
         
-        config.parse_from_file("config/main.yaml")
+        config.parse_from_file(self.config["config_hierarchy"][1])
         config.add_initial_guess(initial_guess,timings)
         config.add_solver(IpoptSolver())
         self.smoother = SingleSmoother(self.robot, config)
