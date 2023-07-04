@@ -5,38 +5,11 @@ import copy
 from pydrake.all import *
 from manipulation.meshcat_utils import PublishPositionTrajectory
 
-class TrajectorySmoother:
+class TrajectoryOptimizer:
 
     def __init__(self, robot, config):
         self.robot = robot
         self.config = config
-        # self.num_control_points = config["num_cps"]
-        # self.bspline_order = config["bspline_order"]
-        # self.demo = config.get("demo", None)
-        # self.wp_per_segment = config.get("wp_per_segment", self.num_control_points)
-        # self.overlap = config.get("overlap", 0)
-        
-        # self.vel_bound = config.get("bound_velocity", None)
-        # self.acc_bound = config.get("bound_acceleration", None)
-        # self.jerk_bound = config.get("bound_jerk", None)
-        # self.duration_bound = config.get("bound_duration", None)
-
-        # self.coeff_duration = config.get("coeff_duration", None)
-        # self.coeff_jerk = config.get("coeff_jerk", None)
-        # self.coeff_joint_cp_error = config.get("coeff_joint_cp_error", None)
-        # self.coeff_vel = config.get("coeff_vel", None)
-
-        # self.tol_joint = config.get("tol_joint", None)
-        # self.tol_translation = config.get("tol_translation", None)
-        # self.tol_rotation = config.get("tol_rotation", None)
-
-        # self.init_guess_cps = config.get("init_guess_cps", None)
-        # self.waypoints_ts = config.get("waypoints_ts", None)
-
-        # self.doplot = config.get("plot", True)
-
-        # self.solver = config.get("solver", None)
-        # self.solver_log = config.get("solver_log", "/tmp/trajopt.txt")
 
     def run(self):
         if self.config.demo is not None: self.input_demo()
@@ -58,7 +31,6 @@ class TrajectorySmoother:
         self.solve()
         result_traj = self.compile_trajectory()
         if self.config.doplot is True: self.plot_trajectory(result_traj)
-
 
 
     def input_demo(self):
@@ -361,3 +333,4 @@ class TrajectorySmoother:
     
     def import_waypoints_ts(self, timings):
         self.timings = timings
+        

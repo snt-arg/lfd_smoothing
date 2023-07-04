@@ -2,8 +2,8 @@
 
 from pydrake.all import *
 
-from lfd_smoother.core.smoother import TrajectorySmoother
-from lfd_smoother.core.single_smoother import SingleSmoother
+from lfd_smoother.core.trajectory_optimizer import TrajectoryOptimizer
+from lfd_smoother.core.single_optimizer import SingleOptimizer
 from lfd_smoother.util.demonstration import Demonstration
 from lfd_smoother.util.fr3_drake import FR3Drake
 from lfd_smoother.util.config import FR3Config
@@ -22,7 +22,7 @@ config.parse_from_file("config/initial.yaml")
 
 
 
-smoother = TrajectorySmoother(robot, config)
+smoother = TrajectoryOptimizer(robot, config)
 smoother.run()
 initial_guess = smoother.export_cps()
 timings = smoother.export_waypoint_ts()
@@ -31,7 +31,7 @@ config.parse_from_file("config/main.yaml")
 config.add_initial_guess(initial_guess,timings)
 config.add_solver(IpoptSolver())
 
-smoother = SingleSmoother(robot, config)
+smoother = SingleOptimizer(robot, config)
 smoother.run()
 
 

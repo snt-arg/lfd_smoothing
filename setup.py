@@ -1,10 +1,11 @@
-from setuptools import setup, find_packages
+#!/usr/bin/env python3
 
-setup(name='lfd_smoothing',
-      version='1.0',
-      author='Alireza Barekatain',
-      description='lfd smoothing',
-      url='https://github.com/snt-arg/lfd_smoothing',
-      packages=find_packages(
-          include=['lfd_smoother'])
-      )
+from distutils.core import setup
+from catkin_pkg.python_setup import generate_distutils_setup
+
+d = generate_distutils_setup(
+    packages=['lfd_smoother'],
+    package_dir={'lfd_smoother':'src/lfd_smoother'}
+)
+
+setup(**d)

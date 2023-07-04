@@ -2,9 +2,9 @@
 import numpy as np
 
 from pydrake.all import *
-from lfd_smoother.core.smoother import TrajectorySmoother
+from lfd_smoother.core.trajectory_optimizer import TrajectoryOptimizer
 
-class SingleSmoother(TrajectorySmoother):
+class SingleOptimizer(TrajectoryOptimizer):
 
     def __init__(self, robot, config):
         super().__init__(robot, config)
@@ -59,3 +59,4 @@ class SingleSmoother(TrajectorySmoother):
             cost += matmul((limit-vel).transpose(),(limit+vel))[0,0] * dt * self.config.coeff_vel / (len(ts)*self.robot.plant.num_positions())
 
         self.vel_cost = self.progs[0].AddCost(cost)
+        
