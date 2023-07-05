@@ -8,30 +8,19 @@ from lfd_smoother.util.demonstration import Demonstration
 from lfd_smoother.util.fr3_drake import FR3Drake
 from lfd_smoother.util.config import FR3Config
 
-thr_translation = 0.01
+from lfd_smoother.api.trajectory_smoother import TrajectorySmoother
 
-demo = Demonstration()
-demo.read_from_json(filename='demo_samples/json/00.json')
-demo.filter(thr_translation=thr_translation)
+smoother_config= {
+"demo_filter_threshold": 0.01,
+"franka_pkg_xml": "drake/franka_drake/package.xml",
+"urdf_path": "package://franka_drake/urdf/fr3_nohand.urdf",
+"config_hierarchy": ["config/opt/initial.yaml", "config/opt/main.yaml"]
+}
 
-robot = FR3Drake(franka_pkg_xml="drake/franka_drake/package.xml",
-                 urdf_path="package://franka_drake/urdf/fr3_nohand.urdf")
-
-config = FR3Config(robot, demo)
-config.parse_from_file("config/initial.yaml")
-
+smoother = TrajectorySmoother(smoother_config)
 
 
-smoother = TrajectoryOptimizer(robot, config)
-smoother.run()
-initial_guess = smoother.export_cps()
-timings = smoother.export_waypoint_ts()
-
-config.parse_from_file("config/main.yaml")
-config.add_initial_guess(initial_guess,timings)
-config.add_solver(IpoptSolver())
-
-smoother = SingleOptimizer(robot, config)
+smoother.read_demo_json('demo_samples/json/00.json')
 smoother.run()
 
 
