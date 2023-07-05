@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
+from datetime import datetime
 
 from pydrake.all import *
 from manipulation.meshcat_utils import PublishPositionTrajectory
@@ -314,6 +315,9 @@ class TrajectoryOptimizer:
         axs[3].set_xlabel('Time')
         
         plt.tight_layout()
+        current_datetime = datetime.now().strftime('%Y%m%d%H%M%S')
+        filename = '/tmp/' + f'output_optimizer_{current_datetime}.svg'
+        plt.savefig(filename, format='svg')
         plt.show()    
     
     def export_cps(self):
