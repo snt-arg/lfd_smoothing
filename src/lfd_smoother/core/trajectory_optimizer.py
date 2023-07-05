@@ -31,6 +31,7 @@ class TrajectoryOptimizer:
         self.solve()
         result_traj = self.compile_trajectory()
         if self.config.doplot is True: self.plot_trajectory(result_traj)
+        return result_traj
 
 
     def input_demo(self):
