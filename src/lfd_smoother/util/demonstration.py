@@ -101,11 +101,8 @@ class Demonstration:
             
         # ys = np.insert(ys,[ys.shape[1], ys.shape[1]], 0, axis=1) 
         
-        self.ts = ts
-        self.ys = ys
-        self.positions = positions
-        self.orientations = orientations
-        (self.length, self.num_q) = ys.shape
+        self.read_raw(ts,ys,positions,orientations)
+    
     
     
     def export_as_json(self, filename):
@@ -122,9 +119,14 @@ class Demonstration:
         with open(filename, "r") as file:
             obj = json.loads(file.read())
         
-        self.ts = np.array(obj["ts"])
-        self.ys = np.array(obj["ys"])
-        self.positions = np.array(obj["positions"])
-        self.orientations = np.array(obj["orientations"])
-        (self.length, self.num_q) = self.ys.shape
-        
+        self.read_raw(np.array(obj["ts"]),
+                      np.array(obj["ys"]),
+                      np.array(obj["positions"]),
+                      np.array(obj["orientations"]))
+    
+    def read_raw(self, ts, ys, positions, orientations):
+        self.ts = ts
+        self.ys = ys
+        self.positions = positions
+        self.orientations = orientations
+        (self.length, self.num_q) = ys.shape 
