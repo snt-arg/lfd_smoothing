@@ -39,7 +39,6 @@ class TrajectorySmoother:
         
         config.parse_from_file(self.config["config_hierarchy"][1])
         config.add_initial_guess(initial_guess,timings)
-        config.add_solver(IpoptSolver())
         self.smoother = SingleOptimizer(self.robot, config)
         self.result_traj = self.smoother.run()
         

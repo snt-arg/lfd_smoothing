@@ -30,6 +30,23 @@ class SingleOptimizer(TrajectoryOptimizer):
 
     def solve(self):
         self._solve(self.progs[0])
+    
+    def _solve(self,prog):
+        solver_options = SolverOptions()
+        solver_options.SetOption(IpoptSolver.id(), "tol", 1e-6)
+        solver_options.SetOption(CommonSolverOption.kPrintFileName, self.config.solver_log)
+        # solver_options.SetOption(IpoptSolver.id(), "print_level", 5)
+        prog.SetSolverOptions(solver_options)
+
+        solver = IpoptSolver()
+        self.result = solver.Solve(prog)
+        self.success = self.result.is_success()
+        
+        if not self.success:
+            print("Optimization Failed")
+        else:
+            print("Optimization Finished Successfully")
+
 
     def add_joint_cp_error_cost(self):
         num_q = self.robot.plant.num_positions()
