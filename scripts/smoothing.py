@@ -2,12 +2,6 @@
 
 from pydrake.all import *
 
-from lfd_smoother.core.trajectory_optimizer import TrajectoryOptimizer
-from lfd_smoother.core.single_optimizer import SingleOptimizer
-from lfd_smoother.util.demonstration import Demonstration
-from lfd_smoother.util.fr3_drake import FR3Drake
-from lfd_smoother.util.config import FR3Config
-
 from lfd_smoother.api.trajectory_smoother import TrajectorySmoother
 
 smoother_config= {
