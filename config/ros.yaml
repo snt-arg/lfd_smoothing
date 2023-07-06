@@ -1,0 +1,6 @@
+smoother_config: {
+demo_filter_threshold: 0.01,
+franka_pkg_xml: $(find lfd_smoothing)/drake/franka_drake/package.xml,
+urdf_path: package://franka_drake/urdf/fr3_nohand.urdf,
+config_hierarchy: ["$(find lfd_smoothing)/config/opt/initial.yaml", "$(find lfd_smoothing)/config/opt/main.yaml"]
+}
