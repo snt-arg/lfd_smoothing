@@ -13,7 +13,4 @@ COPY . ${LFD_PKG_PATH}
 # Install python and apt dependencies
 RUN . ${LFD_PKG_PATH}/docker/install_deps.bash
 
-# Install lfd_smoothing dependecy
-RUN pip3 install -e ${LFD_PKG_PATH}/src/lfd_smoother
-
 WORKDIR ${LFD_PKG_PATH}

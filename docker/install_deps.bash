@@ -5,6 +5,7 @@ echo ""
 
 python -m pip install --upgrade pip
 python -m pip install -r ${LFD_PKG_PATH}/docker/requirements.txt || exit $?
+python -m pip install -e ${LFD_PKG_PATH}/lfd_smoother
 
 echo ""
 echo "Start installing APT dependencies..."
