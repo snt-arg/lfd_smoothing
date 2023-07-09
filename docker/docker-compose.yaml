@@ -6,7 +6,7 @@ services:
     build:
       context: ../
       dockerfile: ./docker/drake.Dockerfile
-    image: ldfs_drake
+    image: lfd_drake
     container_name: focal-drake-1.18.0
     ports:
       # Open port for a Jupyter notebook
