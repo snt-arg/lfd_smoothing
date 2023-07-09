@@ -16,7 +16,7 @@ services:
     volumes:
       - type: bind
         source: ./
-        target: "/root/lsdf_ws"
+        target: "/root/lfd_ws"
     networks:
       - default_network
 
