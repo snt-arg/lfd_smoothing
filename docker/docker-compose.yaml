@@ -1,0 +1,24 @@
+# TODO - convert to docker compose V2
+version: '3'
+
+services:
+  ldf_smoothing:
+    build:
+      context: ../
+      dockerfile: ./docker/drake.Dockerfile
+    image: ldfs_drake
+    container_name: focal-drake-1.18.0
+    ports:
+      # Open port for a Jupyter notebook
+      - "8888:8888"
+      # Open port for meshcat sessions
+      - "7000-7099"
+    volumes:
+      - type: bind
+        source: ./
+        target: "/root/lsdf_ws"
+    networks:
+      - default_network
+
+networks:
+  default_network:
