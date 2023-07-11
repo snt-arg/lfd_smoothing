@@ -6,10 +6,10 @@ from pydrake.all import *
 class FR3Drake:
 
     def __init__(self, franka_pkg_xml, urdf_path, base_frame = "fr3_link0", gripper_frame = "fr3_link8", home_pos = None):
-        
+
         self.urdf_path = urdf_path
         self.franka_path = franka_pkg_xml
-        
+
         self.meshcat = StartMeshcat()
         self.meshcat.Delete()
         self.builder = DiagramBuilder()
@@ -37,6 +37,14 @@ class FR3Drake:
         )
         self.meshcat.SetProperty("collision", "visible", False)
 
+        # Add slider for online user feedback
+        self.meshcat.AddSlider(name="user_feedback",
+                               min=0.0,
+                               max=1.0,
+                               step=0.001,
+                               value=0.5,
+                               )
+
         self.diagram = self.builder.Build()
         self.context = self.diagram.CreateDefaultContext()
         self.plant_context = self.plant.GetMyContextFromRoot(self.context)
@@ -44,9 +52,7 @@ class FR3Drake:
         self.num_q = self.plant.num_positions()
         self.q0 = self.plant.GetPositions(self.plant_context)
         self.gripper_frame = self.plant.GetFrameByName(gripper_frame, self.robot)
-        
- 
-    
+
     def add_fr3(self, home_pos, base_frame):
         parser = Parser(self.plant)
         parser.package_map().AddPackageXml(self.franka_path)
@@ -63,7 +69,7 @@ class FR3Drake:
                 index += 1
 
         return fr3
-    
+
     def create_waypoint(self, name, position):
         X = RigidTransform(position)
         self.meshcat.SetObject(name, Sphere(0.003), rgba=Rgba(0.9, 0.1, 0.1, 1))
