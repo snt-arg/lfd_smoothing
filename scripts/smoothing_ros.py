@@ -47,7 +47,7 @@ if __name__ == '__main__':
     pub_save_demo = rospy.Publisher("save_demonstration", DemonstrationMsg , queue_size=1)
     
     for i in range(demo_count):
-        resp = sc_lfd_storage(name="picknplace{}".format(i))
+        resp = sc_lfd_storage(name=demo_name +"{}".format(i))
         demonstration = resp.Demonstration
         smoother.read_demo_ros(demonstration)
         smoother.run()
