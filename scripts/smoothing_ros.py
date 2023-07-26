@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import os
 import rospy
-import pickle
 
 from trajectory_msgs.msg import JointTrajectoryPoint
 from lfd_interface.msg import DemonstrationMsg
@@ -31,8 +29,6 @@ if __name__ == '__main__':
 
     rospy.init_node('trajectory_smoother_node')
     
-    os.chdir(rospy.get_param("~working_dir"))
-    
     demo_name = rospy.get_param("~demo_name")
     sc_demo_count = rospy.ServiceProxy("fetch_demo_count", DemoCount)
     resp = sc_demo_count(name=demo_name)
@@ -44,21 +40,19 @@ if __name__ == '__main__':
     rospy.wait_for_service("get_demonstration")
     sc_lfd_storage = rospy.ServiceProxy("get_demonstration", GetDemonstration)
 
-    pub_save_demo = rospy.Publisher("save_demonstration", DemonstrationMsg , queue_size=1)
+    pub_save_demo = rospy.Publisher("save_demonstration", DemonstrationMsg)
     
     for i in range(demo_count):
-        resp = sc_lfd_storage(name=demo_name +"{}".format(i))
+        resp = sc_lfd_storage(name="picknplace{}".format(i))
         demonstration = resp.Demonstration
         smoother.read_demo_ros(demonstration)
         smoother.run()
         ts, ys, yds, ydds = smoother.export_raw()
         demo_smooth = export_demonstration(demonstration, ts, ys, yds, ydds)
         pub_save_demo.publish(demo_smooth)
-        traj = smoother.smoother.trajopts[0].ReconstructTrajectory(smoother.smoother.result)
-        with open("{}.pickle".format(demo_smooth.name), 'wb') as file:
-            pickle.dump(traj,file)
+
     
-    # rospy.spin()
+    rospy.spin()
 
 
 
