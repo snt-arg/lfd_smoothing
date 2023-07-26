@@ -292,7 +292,7 @@ class TrajectoryOptimizer:
             jerk.append(composite_traj.MakeDerivative(3).value(t))
         
         # Plot position, velocity, and acceleration
-        fig, axs = plt.subplots(1, 4, figsize=(50,10))
+        fig, axs = plt.subplots(1, 4, figsize=(12,3))
         
         # Position plot
         axs[0].plot(ts, np.array(position).squeeze(axis=2))

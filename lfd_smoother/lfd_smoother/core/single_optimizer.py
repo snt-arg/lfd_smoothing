@@ -27,6 +27,12 @@ class SingleOptimizer(TrajectoryOptimizer):
         for (i,timing) in enumerate(self.ntimings):
             self._add_pose_constraint(self.trajopts[0], self.waypoints[0,i],
                                       self.config.tol_translation, self.config.tol_rotation,timing)
+    
+    def add_duration_bound(self):
+        duration = np.max(self.timings)  
+        trajopt = self.trajopts[0]
+        trajopt.AddDurationConstraint(max(0,duration + self.config.duration_bound[0]),
+                                        duration + self.config.duration_bound[1])
 
     def solve(self):
         self._solve(self.progs[0])
@@ -34,6 +40,7 @@ class SingleOptimizer(TrajectoryOptimizer):
     def _solve(self,prog):
         solver_options = SolverOptions()
         solver_options.SetOption(IpoptSolver.id(), "tol", 1e-6)
+        solver_options.SetOption(IpoptSolver.id(), "max_iter", 5000)
         solver_options.SetOption(CommonSolverOption.kPrintFileName, self.config.solver_log)
         # solver_options.SetOption(IpoptSolver.id(), "print_level", 5)
         prog.SetSolverOptions(solver_options)

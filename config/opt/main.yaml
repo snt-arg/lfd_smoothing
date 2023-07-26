@@ -2,12 +2,12 @@ bspline_order: 4
 velocity_scaling: 1
 acceleration_scaling: 1
 jerk_scaling: 1
-duration_bound: [0.01,5]
+duration_bound: [-0.1, 0.1] # It means the deviation from the extracted timing from previous optimization step
 coeff_duration: 1
 coeff_jerk: 0.04
 # coeff_vel: 0
 coeff_joint_cp_error: 1
-tol_translation: 0.02
-tol_rotation: 0.1
+tol_translation: 0.04
+tol_rotation: 0.2
 solver_log: "/tmp/trajopt2.txt"
 plot: true
