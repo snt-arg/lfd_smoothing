@@ -18,3 +18,39 @@ smoother.read_demo_json('demo_samples/json/00.json')
 smoother.run()
 
 
+#%%
+
+trajopt = smoother.smoother.trajopts[0]
+
+traj = trajopt.ReconstructTrajectory(smoother.smoother.result)
+
+smoother.smoother.plot_trajectory(traj)
+
+#%% 
+
+import pickle
+
+serialized_trajectory = pickle.dumps(traj)
+
+
+newtraj = pickle.loads(serialized_trajectory)
+
+smoother.smoother.plot_trajectory(newtraj)
+
+#%% normalize trajectory
+
+duration = traj.end_time() - traj.start_time()
+
+basis = traj.basis()
+scaled_knots = [(knot / duration) for knot in basis.knots()]
+
+ntraj = BsplineTrajectory(
+    BsplineBasis(basis.order(), scaled_knots),
+    traj.control_points())
+
+smoother.smoother.plot_trajectory(ntraj)
+
+#%% Store JSON
+
+
+
