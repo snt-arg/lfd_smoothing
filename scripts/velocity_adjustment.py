@@ -8,6 +8,8 @@ import numpy as np
 from pydrake.all import *
 
 from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64
+
 
 
 def normalize_trajectory(traj):
@@ -24,11 +26,19 @@ class Particle:
     
     def __init__(self, v0):
         self.v0 = v0
+        self.v = v0
         self.reset()
+        self.sub = rospy.Subscriber('/joy_filtered', Float64, self.callback)
+        self.acceleration = 0
         
     def reset(self):
         self.t = 0
         self.x = 0
+        self.v = self.v0
+
+    def callback(self, msg :  Float64):
+        self.acceleration = 0.2* msg.data
+        # print(self.acceleration)
          
     def acc(self, t):
         # return 0
@@ -44,7 +54,8 @@ class Particle:
 
     def position(self,t):
             dt = t - self.t
-            dx = 0.5*self.acc(t)*(dt**2) + self.v0*dt
+            self.v = self.acceleration*dt + self.v
+            dx = 0.5*self.acceleration*(dt**2) + self.v*dt
             self.t = t
             self.x +=dx
             if self.x > 1: self.x = 1
@@ -55,8 +66,7 @@ if __name__ == '__main__':
     rospy.init_node('velocity_adjustment_node')
     os.chdir(rospy.get_param("~working_dir"))
 
-
-    with open("smoothpicknplace0.pickle", 'rb') as file:
+    with open("smoothpicknplaceee0.pickle", 'rb') as file:
         traj = pickle.load(file)
 
     duration , ntraj = normalize_trajectory(traj)
