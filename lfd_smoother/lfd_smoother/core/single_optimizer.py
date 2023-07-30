@@ -28,11 +28,11 @@ class SingleOptimizer(TrajectoryOptimizer):
             self._add_pose_constraint(self.trajopts[0], self.waypoints[0,i],
                                       self.config.tol_translation, self.config.tol_rotation,timing)
     
-    def add_duration_bound(self):
-        duration = np.max(self.timings)  
-        trajopt = self.trajopts[0]
-        trajopt.AddDurationConstraint(max(0,duration + self.config.duration_bound[0]),
-                                        duration + self.config.duration_bound[1])
+    # def add_duration_bound(self):
+    #     duration = np.max(self.timings)  
+    #     trajopt = self.trajopts[0]
+    #     trajopt.AddDurationConstraint(max(0,duration + self.config.duration_bound[0]),
+    #                                     duration + self.config.duration_bound[1])
 
     def solve(self):
         self._solve(self.progs[0])
