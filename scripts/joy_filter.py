@@ -12,10 +12,10 @@ class KalmanSmoother:
         # Initialize Kalman Filter
         self.kf = KalmanFilter(transition_matrices=[1],   # no change from t-1 to t
                                observation_matrices=[1],  # no scaling in observed value
-                               initial_state_mean=1,     # assume initial state mean 0
+                               initial_state_mean=0,     # assume initial state mean 0
                                initial_state_covariance=1,  # assume initial state covariance 1
                                transition_covariance=0.01,  # small process noise
-                               observation_covariance=5) 
+                               observation_covariance=1) 
         self.state_estimate = 0
         self.state_covariance = 1    
         # Subscribe to the input topic

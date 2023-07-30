@@ -25,7 +25,7 @@ class TrajectorySmoother:
         self.demo.read_from_json(filename=filename)
         self.demo.filter(thr_translation=self.config["demo_filter_threshold"])
 
-    def run(self):
+    def run(self, timings = None):
 
         self.robot = FR3Drake(franka_pkg_xml=self.config["franka_pkg_xml"],
                         urdf_path=self.config["urdf_path"])
@@ -35,10 +35,13 @@ class TrajectorySmoother:
         self.smoother = TrajectoryOptimizer(self.robot, config)
         self.smoother.run()
         initial_guess = self.smoother.export_cps()
-        timings = self.smoother.export_waypoint_ts()
-        
+        if timings is None:
+            self.timings = self.smoother.export_waypoint_ts()
+        else:
+            self.timings = timings
+            
         config.parse_from_file(self.config["config_hierarchy"][1])
-        config.add_initial_guess(initial_guess,timings)
+        config.add_initial_guess(initial_guess,self.timings)
         self.smoother = SingleOptimizer(self.robot, config)
         self.result_traj = self.smoother.run()
         

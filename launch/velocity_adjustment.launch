@@ -2,9 +2,10 @@
 
     <!-- <arg name="demo_name" default="picknplace"/> -->
     <arg name="working_dir" value="$(find lfd_smoothing)/data" />
+    <arg name="demo_name" default="smoothpicknplace0"/> 
 
     <node name="velocity_adjustment" pkg="lfd_smoothing" type="velocity_adjustment.py" output="screen">
-        <!-- <param name="demo_name" value="$(arg demo_name)"/> -->
+        <param name="demo_name" value="$(arg demo_name)"/>
         <param name="working_dir" value="$(arg working_dir)"/>
     </node>
 

@@ -2,6 +2,7 @@
 
     <arg name="demo_name" default="picknplace"/>
     <arg name="working_dir" value="$(find lfd_smoothing)/data" />
+    <arg name="correction" default="false" />
 
 
     <include file="$(find lfd_interface)/launch/lfd_storage.launch"/>
@@ -9,6 +10,7 @@
     <node name="trajectory_smoothing" pkg="lfd_smoothing" type="smoothing_ros.py" output="screen">
         <param name="demo_name" value="$(arg demo_name)"/>
         <param name="working_dir" value="$(arg working_dir)"/>
+        <param name="correction" value="$(arg correction)"/>
         <rosparam command="load" file="$(find lfd_smoothing)/config/ros.yaml" subst_value="true" />
     </node>
 

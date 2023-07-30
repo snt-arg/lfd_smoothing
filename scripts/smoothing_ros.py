@@ -26,6 +26,26 @@ def export_demonstration(template : DemonstrationMsg, ts, ys, yds, ydds):
     template.name = "smooth" + template.name
     return template
 
+def import_correction_data(demo_name):
+    try:
+        with open("timing_new/smooth" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
+            timings = pickle.load(f)
+        print("File opened and data loaded successfully.")
+    except FileNotFoundError:
+        print("File does not exist.")
+        timings = None
+    
+    try:
+        with open("tolerances/smooth" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
+            tolerances = pickle.load(f)
+        print("File opened and data loaded successfully.")
+    except FileNotFoundError:
+        print("File does not exist.")
+        tolerances = None
+
+    return timings, tolerances    
+
+
 
 if __name__ == '__main__':
 
@@ -33,6 +53,9 @@ if __name__ == '__main__':
     
     os.chdir(rospy.get_param("~working_dir"))
     
+    correction = rospy.get_param("~correction")
+
+
     demo_name = rospy.get_param("~demo_name")
     sc_demo_count = rospy.ServiceProxy("fetch_demo_count", DemoCount)
     resp = sc_demo_count(name=demo_name)
@@ -50,13 +73,16 @@ if __name__ == '__main__':
         resp = sc_lfd_storage(name=demo_name +"{}".format(i))
         demonstration = resp.Demonstration
         smoother.read_demo_ros(demonstration)
-        smoother.run()
+        smoother.run(timings=timings)
         ts, ys, yds, ydds = smoother.export_raw()
         demo_smooth = export_demonstration(demonstration, ts, ys, yds, ydds)
         pub_save_demo.publish(demo_smooth)
         traj = smoother.smoother.trajopts[0].ReconstructTrajectory(smoother.smoother.result)
-        with open("{}.pickle".format(demo_smooth.name), 'wb') as file:
+        timings = smoother.timings
+        with open("traj/{}.pickle".format(demo_smooth.name), 'wb') as file:
             pickle.dump(traj,file)
+        with open("timing/{}.pickle".format(demo_smooth.name), 'wb') as file:
+            pickle.dump(timings,file)
     
     # rospy.spin()
 
