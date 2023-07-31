@@ -6,8 +6,9 @@ from lfd_smoother.core.trajectory_optimizer import TrajectoryOptimizer
 
 class SingleOptimizer(TrajectoryOptimizer):
 
-    def __init__(self, robot, config):
+    def __init__(self, robot, config, tolerances = None):
         super().__init__(robot, config)
+        self.tolerances = tolerances
 
         
     def set_init_guess_cps(self, initial_guess):
@@ -25,8 +26,12 @@ class SingleOptimizer(TrajectoryOptimizer):
         self.ntimings = self.timings / np.max(self.timings)
 
         for (i,timing) in enumerate(self.ntimings):
+            if self.tolerances is not None:
+                tol_trans, tol_rot = self.tolerances[i]
+            else:
+                tol_trans, tol_rot = self.config.tol_translation, self.config.tol_rotation
             self._add_pose_constraint(self.trajopts[0], self.waypoints[0,i],
-                                      self.config.tol_translation, self.config.tol_rotation,timing)
+                                      tol_trans, tol_rot,timing)
     
     # def add_duration_bound(self):
     #     duration = np.max(self.timings)  

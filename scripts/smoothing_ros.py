@@ -11,7 +11,7 @@ from lfd_interface.srv import GetDemonstration, DemoCount
 from lfd_smoother.api.trajectory_smoother import TrajectorySmoother
 
 
-def export_demonstration(template : DemonstrationMsg, ts, ys, yds, ydds):
+def export_demonstration(template : DemonstrationMsg, ts, ys, yds, ydds, is_correction=False):
     template.joint_trajectory.points.clear()
     template.pose_trajectory.points.clear()
     
@@ -22,13 +22,16 @@ def export_demonstration(template : DemonstrationMsg, ts, ys, yds, ydds):
         point.accelerations = list(ydds[i,:,0])
         point.time_from_start = rospy.Duration.from_sec(ts[i])
         template.joint_trajectory.points.append(point) 
-    
-    template.name = "smooth" + template.name
+    if is_correction:
+        template.name = "correct" + template.name
+    else:
+        template.name = "smooth" + template.name
     return template
 
 def import_correction_data(demo_name):
+    demo_name = "smooth" + demo_name
     try:
-        with open("timing_new/smooth" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
+        with open("timing_new/" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
             timings = pickle.load(f)
         print("File opened and data loaded successfully.")
     except FileNotFoundError:
@@ -36,7 +39,7 @@ def import_correction_data(demo_name):
         timings = None
     
     try:
-        with open("tolerances/smooth" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
+        with open("tolerances/" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
             tolerances = pickle.load(f)
         print("File opened and data loaded successfully.")
     except FileNotFoundError:
@@ -73,9 +76,14 @@ if __name__ == '__main__':
         resp = sc_lfd_storage(name=demo_name +"{}".format(i))
         demonstration = resp.Demonstration
         smoother.read_demo_ros(demonstration)
-        smoother.run(timings=timings)
+        if correction:
+            timings,tolerances = import_correction_data(demo_name)
+        else:
+            timings = None
+            tolerances = None
+        smoother.run(timings=timings, tolerances=tolerances)
         ts, ys, yds, ydds = smoother.export_raw()
-        demo_smooth = export_demonstration(demonstration, ts, ys, yds, ydds)
+        demo_smooth = export_demonstration(demonstration, ts, ys, yds, ydds, is_correction=correction)
         pub_save_demo.publish(demo_smooth)
         traj = smoother.smoother.trajopts[0].ReconstructTrajectory(smoother.smoother.result)
         timings = smoother.timings

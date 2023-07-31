@@ -91,16 +91,27 @@ class Recorder(object):
         metadata["commands"] = self.commands
         return metadata
     
-    def export_tolerances(self, min, max):
-        inputs = self.map_range(np.array(self.commands))
-        self.tols = self.tolerance(inputs,min,max)
+    def export_tolerances(self, min_trans, max_trans, min_rot, max_rot):
+        self.func_s_command = interpolate.interp1d(self.ss, self.map_range(np.array(self.commands)), kind='linear', fill_value="extrapolate")
+        inputs = np.array(self.func_s_command(self.ss_original))
 
-        # Calculate the lower and upper tolerances
+
+        self.tols_trans = self.tolerance(inputs,min_trans,max_trans)
+        self.tols_rot = self.tolerance(inputs, min_rot, max_rot)
+
+        self.tols = list(zip(
+            list(self.tols_trans),
+            list(self.tols_rot)
+        ))
+
+        return self.tols
+
+    def plot_tolerances(self):
+
         lower_tolerance = -self.tols
         upper_tolerance = self.tols
 
-        # Create the plot
-        plt.fill_between(self.ts, lower_tolerance, upper_tolerance, color='grey', alpha=0.5)
+        plt.fill_between(self.ss_original, lower_tolerance, upper_tolerance, color='grey', alpha=0.5)
         plt.xlabel('xs')
         plt.ylabel('ys')
         plt.title('Tolerance Plot')
@@ -245,15 +256,16 @@ def import_data(demo_name):
         timings = pickle.load(file)
     return traj, timings
 
-def export_data(demo_name, timings_new, metadata):
+def export_data(demo_name, timings_new, tolerances, metadata):
     with open("timing_new/{}".format(demo_name), 'wb') as file:
        pickle.dump(timings_new,file)
     with open("metadata/{}".format(demo_name), 'wb') as file:
        pickle.dump(metadata,file)    
-
+    with open("tolerances/{}".format(demo_name), 'wb') as file:
+       pickle.dump(tolerances,file) 
 
 if __name__ == '__main__':
-            # Initialize the node
+
     rospy.init_node('republishing_node', anonymous=True)
     os.chdir(rospy.get_param("~working_dir"))
 
@@ -280,7 +292,6 @@ if __name__ == '__main__':
 
     metadata = recorder.export_metadata()
     timings_new = recorder.export_new_timings()
+    tolerances = recorder.export_tolerances(0.01,0.05,0.1,0.3)
 
-    export_data(demo_name, timings_new, metadata)
-    recorder.export_tolerances(0.01,0.05)
-
+    export_data(demo_name, timings_new, tolerances, metadata)
