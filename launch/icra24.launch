@@ -1,0 +1,14 @@
+<launch>
+
+    <!-- <arg name="demo_name" default="picknplace"/> -->
+    <arg name="working_dir" value="$(find lfd_smoothing)/data" />
+    <arg name="demo_name" default="picknplace0"/> 
+
+    <include file="$(find lfd_interface)/launch/lfd_storage.launch"/>
+
+    <node name="icra24" pkg="lfd_smoothing" type="icra24.py" output="screen">
+        <param name="demo_name" value="$(arg demo_name)"/>
+        <param name="working_dir" value="$(arg working_dir)"/>
+    </node>
+
+</launch>
