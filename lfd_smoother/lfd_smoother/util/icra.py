@@ -13,7 +13,8 @@ from sensor_msgs.msg import JointState
 
 
 from pydrake.all import *
-from dmpbbo.dmps.Trajectory import Trajectory
+from lfd_smoother.util.fr3_drake import FR3Drake
+from lfd_smoother.util.demonstration import Demonstration
 
 
 
@@ -28,11 +29,13 @@ class TrajectoryStock:
         resp = sc_lfd_storage(name=name)
         joint_trajectory = resp.Demonstration.joint_trajectory
         self._from_joint_trajectory(joint_trajectory, t_scale)
+        self.normalize_t()
 
     def import_from_pydrake(self,name, t_scale=0):
         with open("traj/{}.pickle".format(name), 'rb') as file:
             traj = pickle.load(file)
         self._from_pydrake(traj,t_scale)
+        self.normalize_t()
 
     def import_from_joint_trajectory(self,name):
         pass
@@ -114,6 +117,9 @@ class TrajectoryStock:
     
     def _value_pydrake(self, t):
         return self.traj.value(t)
+    
+    def normalize_t(self):
+        self.ss = self.ts / self.ts[-1]
 
 
 
@@ -227,3 +233,134 @@ class TorqueAnalysis:
 
         self.record_flag = False
         return self.calculate_energy_consumption()
+    
+
+
+
+class CartesianAnalysis:
+
+    def __init__(self) -> None:
+        self.robot = FR3Drake(franka_pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/franka_drake/package.xml",
+                urdf_path="package://franka_drake/urdf/fr3_nohand.urdf")
+        self.visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
+        self.ee_body = self.robot.plant.GetBodyByName("fr3_link8")
+
+    def to_position(self, q):
+        self.robot.plant.SetPositions(self.robot.plant_context, q)
+        transform = self.robot.plant.EvalBodyPoseInWorld(self.robot.plant_context, self.ee_body)
+        return transform.translation()
+    
+    def to_velocity(self, q, qd):
+        qqd = np.concatenate((q,qd), axis=0)
+        self.robot.plant.SetPositionsAndVelocities(self.robot.plant_context, qqd)
+        velocity = self.robot.plant.EvalBodySpatialVelocityInWorld(self.robot.plant_context, self.ee_body)
+        return np.linalg.norm(velocity.translational())
+    
+    def to_torque(self, q, qd, qdd): # Does not work!
+        qqd = np.concatenate((q,qd), axis=0)
+        self.robot.plant.SetPositionsAndVelocities(self.robot.plant_context, qqd)
+        force = MultibodyForces(self.robot.plant)
+        force.SetZero()
+        torq = self.robot.plant.CalcInverseDynamics(self.robot.plant_context, qdd, force)
+        return torq
+        
+    
+    def from_trajectory(self, traj):
+        self.ts = traj.ts
+        self.positions = []
+        self.velocities = []
+        for i in range(len(traj.ts)):
+            self.positions.append(self.to_position(traj.ys[i]))
+            self.velocities.append(self.to_velocity(traj.ys[i], traj.yds[i]))
+        
+        self.positions = np.array(self.positions)
+        self.velocities = np.array(self.velocities)
+        traj.positions = self.positions
+        traj.velocities = self.velocities
+    
+    
+    def plot(self):
+        # Make subplots for X, Y, Z, and V
+        fig, axs = plt.subplots(4)
+        
+        # plot x, y, z
+        axs[0].plot(self.ts, self.positions[:, 0]) # plot x
+        axs[0].set_title('X coordinate')
+        axs[1].plot(self.ts, self.positions[:, 1]) # plot y
+        axs[1].set_title('Y coordinate')
+        axs[2].plot(self.ts, self.positions[:, 2]) # plot z
+        axs[2].set_title('Z coordinate')
+        
+        # plot v
+        axs[3].plot(self.ts, self.velocities)
+        axs[3].set_title('V')
+        
+        # Set common labels
+        fig.text(0.5, 0.04, 'Time', ha='center', va='center')
+        fig.text(0.06, 0.5, 'Values', ha='center', va='center', rotation='vertical')
+        
+        plt.tight_layout()
+        plt.show()        
+
+
+
+class ToleranceAnalysis:
+
+    def __init__(self) -> None:
+        pass
+
+    def import_data(self, demo_name):
+        with open("timing/{}.pickle".format(demo_name), 'rb') as file:
+            self.ts_original = pickle.load(file)
+        with open("timing_new/{}.pickle".format(demo_name), 'rb') as file:
+            self.ss_new = pickle.load(file)
+        with open("metadata/{}.pickle".format(demo_name), 'rb') as file:
+            self.metadata = pickle.load(file)    
+        with open("tolerances/{}.pickle".format(demo_name), 'rb') as file:
+            self.tolerances = pickle.load(file) 
+        
+        self.demo = Demonstration()
+        self.demo.read_from_json("waypoints/{}.json".format(demo_name))
+        
+        self.ts = self.metadata["ts"]
+        self.ss = self.metadata["ss"]
+        self.commands = self.metadata["commands"]
+        self.ss_original = np.array(self.ts_original) / self.ts_original[-1]
+
+        self.tolerances = np.array(self.tolerances)
+        self.tol_trans = self.tolerances[:,0]
+        self.tol_rot = self.tolerances[:,1]
+    
+    def plot_traj_with_tols(self, traj):
+        # self.func_s_tol = interpolate.interp1d(self.ss_new, self.tol_trans, kind='linear', fill_value="extrapolate")
+        
+        # tolerances = self.func_s_tol(traj.ss)
+
+        fig, axs = plt.subplots(3, 1, sharex=True)
+
+        x, y, z = self.demo.positions.T  # Transpose to get x, y, z
+        X, Y, Z = traj.positions.T
+
+        # Again, assuming your tolerances are symmetrical
+        axs[0].plot(traj.ss, X, label='X')
+        axs[0].plot(self.ss_new, x, label='X_Original')
+        axs[0].fill_between(self.ss_new, x - self.tol_trans, x + self.tol_trans, color='gray', alpha=0.5)
+
+        axs[1].plot(traj.ss, Y, label='Y')
+        axs[1].plot(self.ss_new, y, label='Y_Original')
+        axs[1].fill_between(self.ss_new, y - self.tol_trans, y + self.tol_trans, color='gray', alpha=0.5)
+
+        axs[2].plot(traj.ss, Z, label='Z')
+        axs[2].plot(self.ss_new, z, label='Z_Original')
+        axs[2].fill_between(self.ss_new, z - self.tol_trans, z + self.tol_trans, color='gray', alpha=0.5)
+
+        axs[2].set_xlabel('Normalized time')
+        axs[0].set_ylabel('X position')
+        axs[1].set_ylabel('Y position')
+        axs[2].set_ylabel('Z position')
+
+        for ax in axs:
+            ax.legend()
+
+        plt.tight_layout()
+        plt.show()        
