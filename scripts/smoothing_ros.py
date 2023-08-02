@@ -91,6 +91,7 @@ if __name__ == '__main__':
             pickle.dump(traj,file)
         with open("timing/{}.pickle".format(demo_smooth.name), 'wb') as file:
             pickle.dump(timings,file)
+        smoother.demo.export_as_json("waypoints/{}.json".format(demo_smooth.name))
     
     # rospy.spin()
 
