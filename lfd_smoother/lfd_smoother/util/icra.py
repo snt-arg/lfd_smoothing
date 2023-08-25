@@ -16,6 +16,9 @@ from pydrake.all import *
 from lfd_smoother.util.fr3_drake import FR3Drake
 from lfd_smoother.util.demonstration import Demonstration
 
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.collections as mcoll
+from matplotlib.colors import LinearSegmentedColormap
 
 
 class TrajectoryStock:
@@ -363,4 +366,120 @@ class ToleranceAnalysis:
             ax.legend()
 
         plt.tight_layout()
-        plt.show()        
+        plt.show()
+
+    def plot_traj_with_tols_3d(self, traj):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        x, y, z = self.demo.positions.T
+        X, Y, Z = traj.positions.T
+
+        # Compute tangent, normal and binormal for the trajectory
+        # These are basic derivatives; for more accurate representations, more sophisticated techniques can be used
+        dx = np.gradient(x)
+        dy = np.gradient(y)
+        dz = np.gradient(z)
+        
+        tangent = np.array([dx, dy, dz]).T
+        tangent /= np.linalg.norm(tangent, axis=1)[:, np.newaxis]
+        
+        # Arbitrarily select [1, 1, 1] as another direction to produce the normal via cross product
+        normal = np.cross(tangent, [1, 1, 1])
+        normal /= np.linalg.norm(normal, axis=1)[:, np.newaxis]
+        
+        binormal = np.cross(tangent, normal)
+        binormal /= np.linalg.norm(binormal, axis=1)[:, np.newaxis]
+        
+        u = np.linspace(0, 2 * np.pi, 49)
+
+        for i in range(len(x)):
+            tol_radius = self.tol_trans  # Assuming a constant tolerance
+            x_circ = x[i] + tol_radius * (np.cos(u) * normal[i, 0] + np.sin(u) * binormal[i, 0])
+            y_circ = y[i] + tol_radius * (np.cos(u) * normal[i, 1] + np.sin(u) * binormal[i, 1])
+            z_circ = z[i] + tol_radius * (np.cos(u) * normal[i, 2] + np.sin(u) * binormal[i, 2])
+            
+            ax.plot(x_circ, y_circ, z_circ, color='gray', alpha=0.2)
+        
+        # Plot the original and new trajectories
+        ax.plot(x, y, z, label='Original Trajectory')
+        # ax.plot(X, Y, Z, label='New Trajectory', color='r')
+
+        ax.set_xlabel('X position')
+        ax.set_ylabel('Y position')
+        ax.set_zlabel('Z position')
+        ax.legend()
+        plt.show()
+
+
+
+class JerkAnalysis:
+
+    def __init__(self) -> None:
+        pass
+
+    # def plot_with_jerk(self, ts, ys, jerks):
+    #     plt.figure(figsize=(10, 6))
+    #     plt.scatter(ts, ys, c=jerks, cmap='viridis', s=10)  # plot y(t) vs t with color representing jerk
+    #     plt.colorbar(label='Jerk')
+    #     plt.xlabel('Time')
+    #     plt.ylabel('Trajectory')
+    #     plt.title('Trajectory with Jerk as Color')
+    #     plt.show()        
+
+# Define custom colormap
+
+    def plot_with_jerk(self, ts, ys, jerks, bounds = None):
+        colors = [
+            "darkslateblue", 
+            "teal",             
+            "limegreen",
+            "darkorange",
+            "darkorange",
+            "darkorange",
+            "red",
+            "red",
+            "red",
+            "red",
+            "red",
+            "red",
+            "darkred",
+            "darkred",
+            "darkred",
+            "darkred",
+            "darkred",
+            "darkred",
+            "darkred"
+        ]
+        # colors = ["black", "blue", "cyan", "green", "yellow", "orange", "red", "magenta"]
+        cmap_name = "custom_div_cmap"
+        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=100)
+        # Take the absolute value of jerks
+        if bounds is None:
+            bounds = np.abs(jerks)
+        else:
+            bounds = np.abs(bounds)
+
+        abs_jerks = np.abs(jerks)
+
+        # Create line segments and corresponding colors
+        points = np.array([ts, ys]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        norm = plt.Normalize(0, bounds.max())
+        colors = cm(norm(abs_jerks))  # Using the custom colormap
+        
+        # Plot trajectory with color-coded jerk
+        fig, ax = plt.subplots(figsize=(5, 3))
+        lc = mcoll.LineCollection(segments, colors=colors, linewidth=4)
+        ax.add_collection(lc)
+        ax.autoscale()
+        
+        # Add colorbar and labels
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)  # Using the custom colormap
+        sm.set_array([])
+        plt.colorbar(sm, ax=ax, label='Jerk Magnitude')
+        # plt.xlabel('Time')
+        # plt.ylabel('Trajectory')
+        # plt.title('Trajectory with Jerk Magnitude as Color')
+        
+        plt.show()

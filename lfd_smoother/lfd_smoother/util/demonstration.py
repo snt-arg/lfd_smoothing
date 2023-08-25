@@ -1,6 +1,9 @@
 import numpy as np
 import pickle
 import json
+import rospy
+from lfd_interface.msg import PoseTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 from pydrake.all import *
 
@@ -130,3 +133,34 @@ class Demonstration:
         self.positions = positions
         self.orientations = orientations
         (self.length, self.num_q) = ys.shape 
+
+
+    def export_to_ros(self, demo_template):
+        # Prepare JointTrajectory
+        joint_trajectory = demo_template.joint_trajectory
+        joint_trajectory.points = []
+        for i in range(self.length):
+            point = JointTrajectoryPoint()  # Get the type of the points and instantiate
+            point.positions = self.ys[i, :]
+            point.time_from_start = rospy.Duration.from_sec(self.ts[i]) 
+            joint_trajectory.points.append(point)
+
+        # Prepare PoseTrajectory
+        pose_trajectory = demo_template.pose_trajectory
+        pose_trajectory.points = []
+        for i in range(self.length):
+            point = PoseTrajectoryPoint()  # Get the type of the points and instantiate
+            point.pose.position.x = self.positions[i, 0]
+            point.pose.position.y = self.positions[i, 1]
+            point.pose.position.z = self.positions[i, 2]
+            point.pose.orientation.w = self.orientations[i, 0]
+            point.pose.orientation.x = self.orientations[i, 1]
+            point.pose.orientation.y = self.orientations[i, 2]
+            point.pose.orientation.z = self.orientations[i, 3]
+            pose_trajectory.points.append(point)
+
+        # Put together in the DemonstrationMsg
+        demo_template.joint_trajectory = joint_trajectory
+        demo_template.pose_trajectory = pose_trajectory
+
+        return demo_template
