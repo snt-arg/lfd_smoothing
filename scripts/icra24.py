@@ -53,8 +53,8 @@ def jerk_analysis():
 
     jerk_analysis = JerkAnalysis()
     # jerk_analysis.plot_with_jerk(smooth_traj.ts, smooth_traj.ys[:,1], smooth_traj_n.yddds[:,1], original_traj_n.yddds[:,1])
-    jerk_analysis.plot_with_jerk(original_traj.ts, original_traj.ys[:,1], original_traj_n.yddds[:,1])
-  
+    jerk_analysis.plot_with_high_jerk(original_traj.ts, original_traj.ys[:,1], original_traj_n.yddds[:,1])
+    # jerk_analysis.plot_with_low_jerk(smooth_traj.ts, smooth_traj.ys[:,1], smooth_traj_n.yddds[:,1])
 
 if __name__ == '__main__':
 
