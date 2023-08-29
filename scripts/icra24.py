@@ -40,7 +40,6 @@ def tolerance_analysis():
     tol_an = ToleranceAnalysis()
     tol_an.import_data("smooth" + demo_name)
     tol_an.plot_traj_with_tols(correct_traj)
-    # tol_an.plot_t_s()
     # tol_an.plot_t_s_command()
     return tol_an
 
@@ -78,20 +77,38 @@ def velocity_adjustment_analysis():
     # refined_cart.plot_3d()
 
     smooth_traj.plot()
-    refined_traj.plot()    
+    refined_traj.plot()  
+
+def tolerance_analysis2():
+    smooth_traj = TrajectoryStock()
+    smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
+
+    correct_traj = TrajectoryStock()
+    correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
+
+    smooth_cart = CartesianAnalysis()
+    smooth_cart.from_trajectory(smooth_traj)
+
+    correct_cart = CartesianAnalysis()
+    correct_cart.from_trajectory(correct_traj)
+
+    tol_an = ToleranceAnalysis()
+    tol_an.import_data("smooth" + demo_name)
+    tol_an.plot_normalized(smooth_traj, correct_traj)
+    return tol_an
 
 if __name__ == '__main__':
 
     rospy.init_node('icra24')
     os.chdir(rospy.get_param("~working_dir"))
 
-    demo_name = "picknplace0"
+    demo_name = "picknplaceee0"
 
     # original_traj = TrajectoryStock()
     # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
     # original_traj.plot() 
 
-    tol_an = tolerance_analysis()
+    tol_an = tolerance_analysis2()
     # velocity_adjustment_analysis()
 
 

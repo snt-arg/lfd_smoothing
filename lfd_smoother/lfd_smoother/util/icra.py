@@ -19,6 +19,7 @@ from lfd_smoother.util.demonstration import Demonstration
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.collections as mcoll
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Ellipse
 
 
 class TrajectoryStock:
@@ -438,7 +439,66 @@ class ToleranceAnalysis:
 
         plt.tight_layout()
         plt.show()
+
+    def plot_normalized(self, smooth_traj, correct_traj):
+        tol_default = 0.02
+        
+        x, y, z = self.demo.positions.T
+
+        X, Y, Z = correct_traj.positions.T
+        Ts = correct_traj.ts #/ correct_traj.ts[-1]
+
+        XX, YY, ZZ = smooth_traj.positions.T
+        TTs = smooth_traj.ts #/ smooth_traj.ts[-1]
+
+        fig, axs = plt.subplots(2, 1, sharex=True)
+
+        axs[0].plot(Ts, X, label='X_High_Tol' , color='firebrick', linewidth=2)
+        axs[0].plot(TTs, XX, label='X_Low_Tol'  , color='royalblue', linewidth=2)
+        axs[0].fill_between(self.ss_original * correct_traj.ts[-1], x - self.tol_trans, x + self.tol_trans, color='firebrick', alpha=0.2)
+        axs[0].fill_between(self.ss_original * smooth_traj.ts[-1], x - tol_default, x + tol_default, color='royalblue', alpha=0.2)
+
+
+        velocities = np.array(correct_traj.velocities)
+        times = np.array(correct_traj.ts)
+        accelerations = np.gradient(velocities, times)
+        jerks = np.gradient(accelerations, times)
+
+        axs[1].plot(correct_traj.ts, np.abs(jerks), label='Jerk_High_Tol', color='firebrick')
+
+        velocities = np.array(smooth_traj.velocities)
+        times = np.array(smooth_traj.ts)
+        accelerations = np.gradient(velocities, times)
+        jerks = np.gradient(accelerations, times) 
+
+        axs[1].plot(smooth_traj.ts, np.abs(jerks), label='Jerk_Low_Tol', color='royalblue')
+        ellipse = Ellipse((0.13, 40), width=0.3, height=80, edgecolor='green', facecolor='none', linestyle='--')
+        axs[1].add_patch(ellipse)
+
+        axs[1].set_xlabel('Time [s]')
+        axs[0].set_ylabel('X [m]')
+        axs[1].set_ylabel('End-effector Jerk [$m/s^3$]')
+
+        for ax in axs:
+            ax.legend()
+
+        plt.tight_layout()
+        plt.show()
+
+
+        # axs[1].plot(correct_ntraj.ts, Y, label='Y_High_Tol', color='firebrick')
+        # axs[1].plot(smooth_ntraj.ts, YY, label='Y_Low_Tol', color='royalblue')
+        # axs[1].fill_between(self.ss_original, y - self.tol_trans, y + self.tol_trans, color='firebrick', alpha=0.2)
+        # axs[1].fill_between(self.ss_original, y - tol_default, y + tol_default, color='royalblue', alpha=0.2)
+        
+        # axs[2].plot(correct_ntraj.ts, Z, label='Z_High_Tol', color='firebrick')
+        # axs[2].plot(smooth_ntraj.ts, ZZ, label='Z_Low_Tol', color='royalblue')
+        # axs[2].fill_between(self.ss_original, z - self.tol_trans, z + self.tol_trans, color='firebrick', alpha=0.2)
+        # axs[2].fill_between(self.ss_original, z - tol_default, z + tol_default, color='royalblue', alpha=0.2)
     
+        # axs[1].set_ylabel('Y position')
+        # axs[2].set_ylabel('Z position')
+
     def plot_traj_with_tols(self, correct_traj):
 
         self.ts_new = self.ss_new * correct_traj.ts[-1]
