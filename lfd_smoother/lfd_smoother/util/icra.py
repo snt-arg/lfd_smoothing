@@ -24,7 +24,8 @@ from matplotlib.colors import LinearSegmentedColormap
 class TrajectoryStock:
 
     def __init__(self):
-        pass
+        self.positions = None # To be filled later by Cartesian Analysis
+        self.velocities = None # To be filled later by Cartesian Analysis
 
     def import_from_lfd_storage(self,name, t_scale=0):
         rospy.wait_for_service("get_demonstration")
@@ -124,7 +125,31 @@ class TrajectoryStock:
     def normalize_t(self):
         self.ss = self.ts / self.ts[-1]
 
+    def plot(self):
 
+        ts = self.ts
+        
+        data = {
+            "pos [rad]": self.ys,
+            "vel [rad/s]": self.yds,
+            "accl [rad/s${}^2$]": self.ydds,
+            "jerk [rad/s${}^3$]": self.yddds
+        }
+        
+        fig, axs = plt.subplots(2, 2, figsize=(5,4))
+        axs = axs.ravel()
+
+        for idx, (label, values) in enumerate(data.items()):
+            axs[idx].plot(ts, np.array(values))
+            # axs[idx].set_title(label)
+            axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+            axs[idx].set_ylabel(label, labelpad=-4)
+            
+            if idx >= 2:  # Only set x-label for the bottom subplots
+                axs[idx].set_xlabel('time [s]', labelpad=0)
+            
+        plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
+        plt.show()
 
 
 class FrequencyAnalysis:
@@ -303,7 +328,24 @@ class CartesianAnalysis:
         fig.text(0.06, 0.5, 'Values', ha='center', va='center', rotation='vertical')
         
         plt.tight_layout()
-        plt.show()        
+        plt.show() 
+
+
+    def plot_3d(self):
+        # Make a figure and subplots for 3D trajectory, X, Y, Z, and V
+        fig = plt.figure()
+        
+        # 3D trajectory plot
+        ax_traj = fig.add_subplot(2, 2, 1, projection='3d')
+        ax_traj.plot(self.positions[:, 0], self.positions[:, 1], self.positions[:, 2])
+        ax_traj.set_title('3D Trajectory')
+        ax_traj.set_xlabel('X')
+        ax_traj.set_ylabel('Y')
+        ax_traj.set_zlabel('Z')
+      
+
+        plt.tight_layout()
+        plt.show()
 
 
 
@@ -334,28 +376,34 @@ class ToleranceAnalysis:
         self.tol_trans = self.tolerances[:,0]
         self.tol_rot = self.tolerances[:,1]
     
-    def plot_traj_with_tols(self, traj):
+    def plot_traj_with_tols(self, correct_traj, smooth_traj):
         # self.func_s_tol = interpolate.interp1d(self.ss_new, self.tol_trans, kind='linear', fill_value="extrapolate")
         
-        # tolerances = self.func_s_tol(traj.ss)
-
+        # tolerances = self.func_s_tol(correct_traj.ss)
+        tol_default = 0.03
         fig, axs = plt.subplots(3, 1, sharex=True)
 
         x, y, z = self.demo.positions.T  # Transpose to get x, y, z
-        X, Y, Z = traj.positions.T
+        X, Y, Z = correct_traj.positions.T
+        XX, YY, ZZ = smooth_traj.positions.T
 
+        self.ts_original = np.array(self.ts_original) * float(smooth_traj.ts[-1]) / self.ts_original[-1]
+        self.ss_new = self.ss_new * correct_traj.ts[-1]
         # Again, assuming your tolerances are symmetrical
-        axs[0].plot(traj.ss, X, label='X')
-        axs[0].plot(self.ss_new, x, label='X_Original')
-        axs[0].fill_between(self.ss_new, x - self.tol_trans, x + self.tol_trans, color='gray', alpha=0.5)
+        axs[0].plot(correct_traj.ts, X, label='X')
+        axs[0].plot(smooth_traj.ts, XX, label='X_Original')
+        # axs[0].fill_between(self.ss_new, x - self.tol_trans, x + self.tol_trans, color='gray', alpha=0.5)
+        # axs[0].fill_between(self.ts_original, x - tol_default, x + tol_default, color='blue', alpha=0.5)
 
-        axs[1].plot(traj.ss, Y, label='Y')
-        axs[1].plot(self.ss_new, y, label='Y_Original')
+        axs[1].plot(correct_traj.ts, Y, label='Y')
+        axs[1].plot(smooth_traj.ts, YY, label='Y_Original')
         axs[1].fill_between(self.ss_new, y - self.tol_trans, y + self.tol_trans, color='gray', alpha=0.5)
-
-        axs[2].plot(traj.ss, Z, label='Z')
-        axs[2].plot(self.ss_new, z, label='Z_Original')
+        axs[1].fill_between(self.ts_original, y - tol_default, y + tol_default, color='blue', alpha=0.5)
+        
+        axs[2].plot(correct_traj.ts, Z, label='Z')
+        axs[2].plot(smooth_traj.ts, ZZ, label='Z_Original')
         axs[2].fill_between(self.ss_new, z - self.tol_trans, z + self.tol_trans, color='gray', alpha=0.5)
+        axs[2].fill_between(self.ts_original, z - tol_default, z + tol_default, color='blue', alpha=0.5)
 
         axs[2].set_xlabel('Normalized time')
         axs[0].set_ylabel('X position')
