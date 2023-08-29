@@ -268,7 +268,8 @@ class TrajectoryOptimizer:
         return duration, BsplineTrajectory(
             BsplineBasis(basis.order(), scaled_knots),
             [result.GetSolution(trajopt.control_points())[:,i,np.newaxis] for i in range(self.config.num_control_points)])
-    
+
+
     def plot_trajectory(self, composite_traj):
 
         PublishPositionTrajectory(
@@ -280,45 +281,88 @@ class TrajectoryOptimizer:
 
         ts = np.linspace(0, composite_traj.end_time(), 1000)
         
-        position = []
-        velocity = []
-        acceleration = []
-        jerk = []
+        data = {
+            "pos [rad]": [],
+            "vel [rad/s]": [],
+            "accl [rad/s${}^2$]": [],
+            "jerk [rad/s${}^3$]": []
+        }
         
         for t in ts:
-            position.append(composite_traj.value(t))
-            velocity.append(composite_traj.MakeDerivative().value(t))
-            acceleration.append(composite_traj.MakeDerivative(2).value(t))
-            jerk.append(composite_traj.MakeDerivative(3).value(t))
+            data["pos [rad]"].append(composite_traj.value(t))
+            data["vel [rad/s]"].append(composite_traj.MakeDerivative().value(t))
+            data["accl [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
+            data["jerk [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
         
-        # Plot position, velocity, and acceleration
-        fig, axs = plt.subplots(1, 4, figsize=(12,3))
-        
-        # Position plot
-        axs[0].plot(ts, np.array(position).squeeze(axis=2))
-        axs[0].set_ylabel('Position')
-        axs[0].set_xlabel('Time')
-        
-        # Velocity plot
-        axs[1].plot(ts, np.array(velocity).squeeze(axis=2))
-        axs[1].set_ylabel('Velocity')
-        axs[1].set_xlabel('Time')
-        
-        # Acceleration plot
-        axs[2].plot(ts, np.array(acceleration).squeeze(axis=2))
-        axs[2].set_ylabel('Acceleration')
-        axs[2].set_xlabel('Time')
-        
-        # Jerk plot
-        axs[3].plot(ts, np.array(jerk).squeeze(axis=2))
-        axs[3].set_ylabel('Jerk')
-        axs[3].set_xlabel('Time')
-        
-        plt.tight_layout()
+        fig, axs = plt.subplots(2, 2, figsize=(5,4))
+        axs = axs.ravel()
+
+        for idx, (label, values) in enumerate(data.items()):
+            axs[idx].plot(ts, np.array(values).squeeze(axis=2))
+            # axs[idx].set_title(label)
+            axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+            axs[idx].set_ylabel(label, labelpad=-4)
+            
+            if idx >= 2:  # Only set x-label for the bottom subplots
+                axs[idx].set_xlabel('time [s]', labelpad=0)
+            
+        plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
         current_datetime = datetime.now().strftime('%Y%m%d%H%M%S')
         filename = '/tmp/' + f'output_optimizer_{current_datetime}.svg'
         plt.savefig(filename, format='svg')
-        plt.show()    
+        plt.show()
+
+
+    # def plot_trajectory(self, composite_traj):
+
+    #     PublishPositionTrajectory(
+    #         composite_traj, self.robot.context, self.robot.plant, self.robot.visualizer
+    #     )
+    #     self.robot.collision_visualizer.ForcedPublish(
+    #         self.robot.collision_visualizer.GetMyContextFromRoot(self.robot.context)
+    #     )
+
+    #     ts = np.linspace(0, composite_traj.end_time(), 1000)
+        
+    #     position = []
+    #     velocity = []
+    #     acceleration = []
+    #     jerk = []
+        
+    #     for t in ts:
+    #         position.append(composite_traj.value(t))
+    #         velocity.append(composite_traj.MakeDerivative().value(t))
+    #         acceleration.append(composite_traj.MakeDerivative(2).value(t))
+    #         jerk.append(composite_traj.MakeDerivative(3).value(t))
+        
+    #     # Plot position, velocity, and acceleration
+    #     fig, axs = plt.subplots(1, 4, figsize=(12,3))
+        
+    #     # Position plot
+    #     axs[0].plot(ts, np.array(position).squeeze(axis=2))
+    #     axs[0].set_ylabel('Position')
+    #     axs[0].set_xlabel('Time')
+        
+    #     # Velocity plot
+    #     axs[1].plot(ts, np.array(velocity).squeeze(axis=2))
+    #     axs[1].set_ylabel('Velocity')
+    #     axs[1].set_xlabel('Time')
+        
+    #     # Acceleration plot
+    #     axs[2].plot(ts, np.array(acceleration).squeeze(axis=2))
+    #     axs[2].set_ylabel('Acceleration')
+    #     axs[2].set_xlabel('Time')
+        
+    #     # Jerk plot
+    #     axs[3].plot(ts, np.array(jerk).squeeze(axis=2))
+    #     axs[3].set_ylabel('Jerk')
+    #     axs[3].set_xlabel('Time')
+        
+    #     plt.tight_layout()
+    #     current_datetime = datetime.now().strftime('%Y%m%d%H%M%S')
+    #     filename = '/tmp/' + f'output_optimizer_{current_datetime}.svg'
+    #     plt.savefig(filename, format='svg')
+    #     plt.show()    
     
     def export_cps(self):
         cps = []
