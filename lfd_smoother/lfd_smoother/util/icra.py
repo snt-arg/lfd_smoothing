@@ -371,49 +371,155 @@ class ToleranceAnalysis:
         self.ss = self.metadata["ss"]
         self.commands = self.metadata["commands"]
         self.ss_original = np.array(self.ts_original) / self.ts_original[-1]
-
+        # self.ts_original = np.array(self.ts_original) * float(smooth_traj.ts[-1]) / self.ts_original[-1]
+        
         self.tolerances = np.array(self.tolerances)
         self.tol_trans = self.tolerances[:,0]
         self.tol_rot = self.tolerances[:,1]
+
+        self.extract_commands()
+        
+    def extract_commands(self):
+        func_s_command = interpolate.interp1d(self.ss, np.array(self.commands), kind='linear', fill_value="extrapolate")
+        self.wp_commands = np.array(func_s_command(self.ss_original))
+
+    def plot_t_command(self):
+        plt.plot(self.ts, self.commands, label='$s_r(t)$', color='firebrick')
+        # Grids and Background
+        plt.grid(True, linestyle='--', linewidth=0.5, color='gray')        
+        plt.xlabel('Time (t)')
+        plt.ylabel('Deceleration command R(t)')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()        
+
+    def plot_t_s(self):
+        plt.plot(self.ts, self.ss, label='$s_r(t)$', color='firebrick')
+        
+        v0 = 0.2
+        t_new = np.linspace(0, 5, 100) 
+        s_new = v0 * t_new
+        
+        plt.plot(t_new, s_new, label=f'$s(t) = V_0^r \cdot t$', linestyle='--', color='royalblue')
+        # Grids and Background
+        plt.grid(True, linestyle='--', linewidth=0.5, color='gray')        
+        plt.xlabel('Time (t)')
+        plt.ylabel('Normalized time (s)')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    def plot_t_s_command(self):
+        plt.figure(figsize=(6, 3))
+
+        # First plot (2x1 grid, first subplot)
+        plt.subplot(2, 1, 2)
+        plt.plot(self.ts, self.commands, label='$R(t)$', color='firebrick')
+        plt.axvline(x=2.958, color='green', linestyle='-.')
+        plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
+        plt.xlabel('Time (t)')
+        plt.ylabel('R')
+        plt.legend()
+
+        # Second plot (2x1 grid, second subplot)
+        plt.subplot(2, 1, 1)
+        plt.plot(self.ts, self.ss, label='$s_r(t)$', color='firebrick')
+
+        v0 = 0.2
+        t_new = np.linspace(0, 5, 100)
+        s_new = v0 * t_new
+        plt.plot(t_new, s_new, label=f'$s(t) = V_0^r \cdot t$', linestyle='--', color='royalblue')
+        
+        plt.axvline(x=2.958, color='green', linestyle='-.')
+        plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
+        # plt.xlabel('Time (t)')
+        plt.ylabel('s')
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
     
-    def plot_traj_with_tols(self, correct_traj, smooth_traj):
-        # self.func_s_tol = interpolate.interp1d(self.ss_new, self.tol_trans, kind='linear', fill_value="extrapolate")
-        
-        # tolerances = self.func_s_tol(correct_traj.ss)
-        tol_default = 0.03
-        fig, axs = plt.subplots(3, 1, sharex=True)
+    def plot_traj_with_tols(self, correct_traj):
 
-        x, y, z = self.demo.positions.T  # Transpose to get x, y, z
+        self.ts_new = self.ss_new * correct_traj.ts[-1]
+        x, y, z = self.demo.positions.T  
         X, Y, Z = correct_traj.positions.T
-        XX, YY, ZZ = smooth_traj.positions.T
 
-        self.ts_original = np.array(self.ts_original) * float(smooth_traj.ts[-1]) / self.ts_original[-1]
-        self.ss_new = self.ss_new * correct_traj.ts[-1]
-        # Again, assuming your tolerances are symmetrical
-        axs[0].plot(correct_traj.ts, X, label='X')
-        axs[0].plot(smooth_traj.ts, XX, label='X_Original')
-        # axs[0].fill_between(self.ss_new, x - self.tol_trans, x + self.tol_trans, color='gray', alpha=0.5)
-        # axs[0].fill_between(self.ts_original, x - tol_default, x + tol_default, color='blue', alpha=0.5)
-
-        axs[1].plot(correct_traj.ts, Y, label='Y')
-        axs[1].plot(smooth_traj.ts, YY, label='Y_Original')
-        axs[1].fill_between(self.ss_new, y - self.tol_trans, y + self.tol_trans, color='gray', alpha=0.5)
-        axs[1].fill_between(self.ts_original, y - tol_default, y + tol_default, color='blue', alpha=0.5)
+        colors = [
+            "maroon",
+            "darkorange",
+            "darkorange",
+            "limegreen",
+            "limegreen",
+            "teal",
+            "teal", 
+            "royalblue"
+            ]
+        # colors = ["black", "blue", "cyan", "green", "yellow", "orange", "red", "magenta"]
+        cmap_name = "custom_div_cmap"
+        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=100)
+        fig, axs = plt.subplots(3, 1, sharex=True)
         
-        axs[2].plot(correct_traj.ts, Z, label='Z')
-        axs[2].plot(smooth_traj.ts, ZZ, label='Z_Original')
-        axs[2].fill_between(self.ss_new, z - self.tol_trans, z + self.tol_trans, color='gray', alpha=0.5)
-        axs[2].fill_between(self.ts_original, z - tol_default, z + tol_default, color='blue', alpha=0.5)
+        n_segments = len(correct_traj.ts) - 1
+        wps_interp = np.interp(
+        np.linspace(0, 1, n_segments),
+        self.ss_new,
+        self.wp_commands
+        )
 
-        axs[2].set_xlabel('Normalized time')
-        axs[0].set_ylabel('X position')
-        axs[1].set_ylabel('Y position')
-        axs[2].set_ylabel('Z position')
+        norm = plt.Normalize(wps_interp.min(), wps_interp.max())
+        # cm = plt.get_cmap('turbo')
+        colors = cm(norm(wps_interp))
+
+        points = np.array([correct_traj.ts, X]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = mcoll.LineCollection(segments, colors=colors, linewidth=2)
+        axs[0].add_collection(lc)
+        axs[0].autoscale()
+        axs[0].fill_between(self.ts_new, x - self.tol_trans, x + self.tol_trans, color='slategray', alpha=0.4)
+        axs[0].grid(True, linestyle='--', linewidth=0.5, color='gray')
+        axs[0].axvline(x=1.2, color='teal', linestyle='-.', linewidth=1.5, alpha=0.7)
+
+        points = np.array([correct_traj.ts, Y]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = mcoll.LineCollection(segments, colors=colors, linewidth=2)
+        axs[1].add_collection(lc)
+        axs[1].autoscale()
+        axs[1].fill_between(self.ts_new, y - self.tol_trans, y + self.tol_trans, color='slategray', alpha=0.4)
+        axs[1].grid(True, linestyle='--', linewidth=0.5, color='gray')  
+        axs[1].axvline(x=1.2, color='teal', linestyle='-.', linewidth=1.5, alpha=0.7)
+
+        points = np.array([correct_traj.ts, Z]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = mcoll.LineCollection(segments, colors=colors, linewidth=2)
+        axs[2].add_collection(lc)
+        axs[2].autoscale()
+        axs[2].fill_between(self.ts_new, z - self.tol_trans, z + self.tol_trans, color='slategray', alpha=0.4)
+        axs[2].grid(True, linestyle='--', linewidth=0.5, color='gray')
+        axs[2].axvline(x=1.2, color='teal', linestyle='-.', linewidth=1.5, alpha=0.7)
+
+        axs[2].set_xlabel('Time [s]')
+        axs[0].set_ylabel('X [m]')
+        axs[1].set_ylabel('Y [m]')
+        axs[2].set_ylabel('Z [m]')
+
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+        sm.set_array([])
+
+        # cbar_ax = fig.add_axes([0.15, 0.15, 0.03, 0.7])  # [left, bottom, width, height]
+        # cbar = fig.colorbar(sm, cax=cbar_ax)
+
+        # Make space for the colorbar
+        fig.subplots_adjust(right=0.8)
+        cbar_ax = fig.add_axes([0.88, 0.11, 0.02, 0.77])
+        cbar = fig.colorbar(sm, cax=cbar_ax)
+        cbar_ax.yaxis.set_ticks_position('left')
+        cbar.set_label('$R(t)$', rotation=90, labelpad=15)
 
         for ax in axs:
             ax.legend()
 
-        plt.tight_layout()
+        # fig.tight_layout(rect=[0, 0, 0.8, 1])
         plt.show()
 
     def plot_traj_with_tols_3d(self, traj):
