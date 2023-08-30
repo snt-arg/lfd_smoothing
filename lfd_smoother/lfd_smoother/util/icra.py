@@ -457,6 +457,7 @@ class ToleranceAnalysis:
         axs[0].plot(TTs, XX, label='X_Low_Tol'  , color='royalblue', linewidth=2)
         axs[0].fill_between(self.ss_original * correct_traj.ts[-1], x - self.tol_trans, x + self.tol_trans, color='firebrick', alpha=0.2)
         axs[0].fill_between(self.ss_original * smooth_traj.ts[-1], x - tol_default, x + tol_default, color='royalblue', alpha=0.2)
+        axs[0].grid(True, linestyle='--', linewidth=0.5, color='gray')
 
 
         velocities = np.array(correct_traj.velocities)
@@ -474,6 +475,7 @@ class ToleranceAnalysis:
         axs[1].plot(smooth_traj.ts, np.abs(jerks), label='Jerk_Low_Tol', color='royalblue')
         ellipse = Ellipse((0.13, 40), width=0.3, height=80, edgecolor='green', facecolor='none', linestyle='--')
         axs[1].add_patch(ellipse)
+        axs[1].grid(True, linestyle='--', linewidth=0.5, color='gray')
 
         axs[1].set_xlabel('Time [s]')
         axs[0].set_ylabel('X [m]')
