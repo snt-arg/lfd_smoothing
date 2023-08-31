@@ -42,6 +42,12 @@ class TrajectoryStock:
         self._from_pydrake(traj,t_scale)
         self.normalize_t()
 
+    def import_from_dmp_joint_trajectory(self, name, t_scale=0):
+        with open("dmp/{}.pickle".format(name), 'rb') as file:
+            joint_trajectory = pickle.load(file) 
+        self._from_joint_trajectory(joint_trajectory, t_scale)
+        self.normalize_t()
+
     def import_from_joint_trajectory(self,name):
         pass
 
@@ -750,4 +756,74 @@ class JerkAnalysis:
         rounded_bound_max = math.floor(bounds.max() / 10) * 10
         cbar.set_ticks([0, rounded_bound_max / 2, rounded_bound_max])
 
+        plt.show()
+
+
+class DMPAnalysis:
+
+    def __init__(self) -> None:
+        pass
+
+    def plot_3d(self, original_dmp, smooth_dmp):
+        # Make a figure for 3D trajectory
+        fig = plt.figure(figsize=(4, 4))
+        
+        # Create 3D axis
+        ax_traj = fig.add_subplot(111, projection='3d')
+        
+        # Plot original DMP
+        ax_traj.plot(original_dmp.positions[:, 0], original_dmp.positions[:, 1], original_dmp.positions[:, 2], label='Original DMP', linestyle='--', color='royalblue')
+        
+        # Plot smooth DMP
+        ax_traj.plot(smooth_dmp.positions[:, 0], smooth_dmp.positions[:, 1], smooth_dmp.positions[:, 2], label='Smooth DMP', linestyle='-', color='firebrick')
+
+        # ax_traj.plot(original_traj.positions[:, 0], original_traj.positions[:, 1], original_traj.positions[:, 2], label='Traj', linestyle='--', color='g')
+
+        # ax_traj.set_title('3D Trajectory')
+        ax_traj.set_xlabel('X')
+        ax_traj.set_ylabel('Y')
+        ax_traj.set_zlabel('Z')
+        
+        # Add legend to differentiate the original and smooth DMP
+        ax_traj.legend()
+        
+        # plt.tight_layout()
+        plt.show()
+
+    # def plot_vel_acc_jerk(self, original_dmp, smooth_dmp):
+    #     o_velocities = np.array(original_dmp.velocities)
+    #     o_times = np.array(original_dmp.ts)
+    #     o_accelerations = np.gradient(o_velocities, o_times)
+    #     o_jerks = np.gradient(o_accelerations, o_times)
+
+    #     s_velocities = np.array(smooth_dmp.velocities)
+    #     s_times = np.array(smooth_dmp.ts)
+    #     s_accelerations = np.gradient(s_velocities, s_times)
+    #     s_jerks = np.gradient(s_accelerations, s_times)        
+
+    def plot_abs_jerk(self,original_dmp, smooth_dmp):
+        # Calculate jerk for original_dmp
+        o_velocities = np.array(original_dmp.velocities)
+        o_times = np.array(original_dmp.ts)
+        o_accelerations = np.gradient(o_velocities, o_times, edge_order=1)
+        o_jerks = np.gradient(o_accelerations, o_times, edge_order=1)
+        o_abs_jerks = np.abs(o_jerks)
+
+        # Calculate jerk for smooth_dmp
+        s_velocities = np.array(smooth_dmp.velocities)
+        s_times = np.array(smooth_dmp.ts)
+        s_accelerations = np.gradient(s_velocities, s_times, edge_order=1)
+        s_jerks = np.gradient(s_accelerations, s_times, edge_order=1)
+        s_abs_jerks = np.abs(s_jerks)
+
+        # Create plot for jerk comparison
+        plt.figure(figsize=(5, 2))
+        plt.plot(o_times, o_abs_jerks, label='Original DMP', linestyle='--', color='royalblue')
+        plt.plot(s_times, s_abs_jerks, label='Smooth DMP', linestyle='-', color='firebrick')
+        plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
+        # plt.title('Absolute Jerk Comparison')
+        plt.xlabel('Normalized time s')
+        plt.ylabel('|Jerk|')
+        plt.legend()
+        plt.tight_layout()
         plt.show()

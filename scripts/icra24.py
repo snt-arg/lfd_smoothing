@@ -10,7 +10,7 @@ from sensor_msgs.msg import JointState
 
 from pydrake.all import *
 
-from lfd_smoother.util.icra import TrajectoryStock, TorqueAnalysis, CartesianAnalysis, ToleranceAnalysis, JerkAnalysis
+from lfd_smoother.util.icra import TrajectoryStock, TorqueAnalysis, CartesianAnalysis, ToleranceAnalysis, JerkAnalysis, DMPAnalysis
 
     # f = FrequencyAnalysis()
     # f.run(demo_name)
@@ -97,19 +97,41 @@ def tolerance_analysis2():
     tol_an.plot_normalized(smooth_traj, correct_traj)
     return tol_an
 
+def dmp_analysis():
+    original_dmp = TrajectoryStock()
+    original_dmp.import_from_dmp_joint_trajectory("filter"+demo_name, t_scale=1)
+    original_cart = CartesianAnalysis()
+    original_cart.from_trajectory(original_dmp)
+
+    smooth_dmp = TrajectoryStock()
+    smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=1)
+    smooth_cart = CartesianAnalysis()
+    smooth_cart.from_trajectory(smooth_dmp)
+
+    traj = TrajectoryStock()
+    traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
+    traj_cart = CartesianAnalysis()
+    traj_cart.from_trajectory(traj)
+
+    dmp_an = DMPAnalysis()
+    # dmp_an.plot_3d(original_dmp, smooth_dmp)
+    dmp_an.plot_abs_jerk(original_dmp, smooth_dmp)
+
 if __name__ == '__main__':
 
     rospy.init_node('icra24')
     os.chdir(rospy.get_param("~working_dir"))
 
-    demo_name = "picknplaceee0"
+    demo_name = "picknplace0"
 
     # original_traj = TrajectoryStock()
     # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
     # original_traj.plot() 
 
-    tol_an = tolerance_analysis2()
+    # tol_an = tolerance_analysis2()
     # velocity_adjustment_analysis()
+
+    dmp_analysis()
 
 
     # rospy.spin()

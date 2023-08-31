@@ -3,8 +3,8 @@
 
 <svg
    width="3356.2334"
-   height="1690.5695"
-   viewBox="0 0 888.00324 447.29654"
+   height="1789.2847"
+   viewBox="0 0 888.00324 473.41494"
    version="1.1"
    id="svg1"
    inkscape:version="1.3 (1:1.3+202307231459+0e150ed6c4)"
@@ -29,14 +29,14 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      inkscape:zoom="0.26191078"
-     inkscape:cx="-815.1631"
-     inkscape:cy="969.79591"
-     inkscape:window-width="3368"
-     inkscape:window-height="1376"
-     inkscape:window-x="72"
+     inkscape:cx="1607.4176"
+     inkscape:cy="1244.6987"
+     inkscape:window-width="1848"
+     inkscape:window-height="1016"
+     inkscape:window-x="1992"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" /><defs
+     inkscape:current-layer="g2" /><defs
      id="defs1"><marker
        style="overflow:visible"
        id="marker6"
@@ -162,7 +162,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-74.85065,-52.579786)"><g
+     transform="translate(-74.85065,-26.461397)"><g
        id="g2"
        transform="matrix(8.4398402,0,0,8.4398402,-556.87669,-386.7191)"><rect
          style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.291758;stroke-dasharray:none;stroke-opacity:1"
@@ -186,7 +186,17 @@
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52778px;font-family:'TeX Gyre Pagella';-inkscape-font-specification:'TeX Gyre Pagella';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.265"
            x="118.93872"
            y="73.261375"
-           id="tspan2">Optimization</tspan></text></g><g
+           id="tspan2">Optimization</tspan></text><text
+         xml:space="preserve"
+         style="font-style:italic;font-size:3.00954px;font-family:'TeX Gyre Pagella';-inkscape-font-specification:'TeX Gyre Pagella, Italic';text-align:center;text-anchor:middle;fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.264999;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         x="136.92247"
+         y="51.140888"
+         id="text1-27"><tspan
+           sodipodi:role="line"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.00954px;font-family:'TeX Gyre Pagella';-inkscape-font-specification:'TeX Gyre Pagella';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.265"
+           x="136.92247"
+           y="51.140888"
+           id="tspan2-9">Optimization-Based Smoothing</tspan></text></g><g
        id="g2-4"
        transform="matrix(3.1725524,0,0,3.1725524,-41.674144,-21.711827)"><rect
          style="fill:none;fill-rule:evenodd;stroke:#890002;stroke-width:0.776155;stroke-dasharray:none;stroke-opacity:1"
@@ -778,6 +788,15 @@
          height="39.96524"
          x="148.35628"
          y="77.654251"
+         ry="1.5467404" /></g><g
+       id="g2-26-3"
+       transform="matrix(8.4398402,0,0,8.4398402,-935.04871,-531.8648)"><rect
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.192;stroke-dasharray:1.536, 1.536;stroke-dashoffset:0;stroke-opacity:1"
+         id="rect1-18-5"
+         width="64.178146"
+         height="24.321348"
+         x="150.65175"
+         y="70.61554"
          ry="1.5467404" /></g><g
        id="g2-2"
        transform="translate(-98.80623,-21.773915)" /><g
