@@ -282,17 +282,17 @@ class TrajectoryOptimizer:
         ts = np.linspace(0, composite_traj.end_time(), 1000)
         
         data = {
-            "pos [rad]": [],
-            "vel [rad/s]": [],
-            "accl [rad/s${}^2$]": [],
-            "jerk [rad/s${}^3$]": []
+            "${q}_t$ [rad]": [],
+            "$\dot{q}_t$ [rad/s]": [],
+            "$\ddot{q}_t$ [rad/s${}^2$]": [],
+            "$\dddot{q}_t$ [rad/s${}^3$]": []
         }
         
         for t in ts:
-            data["pos [rad]"].append(composite_traj.value(t))
-            data["vel [rad/s]"].append(composite_traj.MakeDerivative().value(t))
-            data["accl [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
-            data["jerk [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
+            data["${q}_t$ [rad]"].append(composite_traj.value(t))
+            data["$\dot{q}_t$ [rad/s]"].append(composite_traj.MakeDerivative().value(t))
+            data["$\ddot{q}_t$ [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
+            data["$\dddot{q}_t$ [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
         
         fig, axs = plt.subplots(2, 2, figsize=(5,4))
         axs = axs.ravel()

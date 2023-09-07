@@ -137,10 +137,10 @@ class TrajectoryStock:
         ts = self.ts
         
         data = {
-            "pos [rad]": self.ys,
-            "vel [rad/s]": self.yds,
-            "accl [rad/s${}^2$]": self.ydds,
-            "jerk [rad/s${}^3$]": self.yddds
+            "${q}_o$ [rad]": self.ys,
+            "$\dot{q}_o$ [rad/s]": self.yds,
+            "$\ddot{q}_o$ [rad/s${}^2$]": self.ydds,
+            "$\dddot{q}_o$ [rad/s${}^3$]": self.yddds
         }
         
         fig, axs = plt.subplots(2, 2, figsize=(5,4))
@@ -390,6 +390,28 @@ class ToleranceAnalysis:
         func_s_command = interpolate.interp1d(self.ss, np.array(self.commands), kind='linear', fill_value="extrapolate")
         self.wp_commands = np.array(func_s_command(self.ss_original))
 
+    def plot_waypoints(self, smooth_duration, correct_duration):       
+        x, y, z = self.demo.positions.T
+        
+        plt.figure(figsize=(6, 2))
+        plt.grid(True, linestyle='--', linewidth=0.5, color='gray')        
+        # Plotting original waypoints
+        plt.scatter(self.ss_original*smooth_duration, y, c='royalblue', marker='+', label=f'Before refinement', alpha=0.5)
+
+        # Plotting corrected waypoints
+        plt.scatter(self.ss_new*correct_duration, y, c='firebrick', marker='*', label=f'After refinement')
+
+        # Adding labels, title, and legend
+        plt.xlabel('Time [s]')
+        plt.ylabel('$y_{w_i}$ [m]')
+        # plt.title('Waypoint Comparisons')
+        plt.legend()
+
+        # Adding grid for better readability
+        plt.tight_layout()
+        plt.show()
+
+
     def plot_t_command(self):
         plt.plot(self.ts, self.commands, label='$s_r(t)$', color='firebrick')
         # Grids and Background
@@ -457,10 +479,10 @@ class ToleranceAnalysis:
         XX, YY, ZZ = smooth_traj.positions.T
         TTs = smooth_traj.ts #/ smooth_traj.ts[-1]
 
-        fig, axs = plt.subplots(2, 1, sharex=True)
+        fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 3.5))
 
-        axs[0].plot(Ts, X, label='X_High_Tol' , color='firebrick', linewidth=2)
-        axs[0].plot(TTs, XX, label='X_Low_Tol'  , color='royalblue', linewidth=2)
+        axs[0].plot(Ts, X, label='High Tolerance' , color='firebrick', linewidth=2)
+        axs[0].plot(TTs, XX, label='Low Tolerance'  , color='royalblue', linewidth=2)
         axs[0].fill_between(self.ss_original * correct_traj.ts[-1], x - self.tol_trans, x + self.tol_trans, color='firebrick', alpha=0.2)
         axs[0].fill_between(self.ss_original * smooth_traj.ts[-1], x - tol_default, x + tol_default, color='royalblue', alpha=0.2)
         axs[0].grid(True, linestyle='--', linewidth=0.5, color='gray')
@@ -471,21 +493,21 @@ class ToleranceAnalysis:
         accelerations = np.gradient(velocities, times)
         jerks = np.gradient(accelerations, times)
 
-        axs[1].plot(correct_traj.ts, np.abs(jerks), label='Jerk_High_Tol', color='firebrick')
+        axs[1].plot(correct_traj.ts, np.abs(jerks), label='High Tolerance', color='firebrick')
 
         velocities = np.array(smooth_traj.velocities)
         times = np.array(smooth_traj.ts)
         accelerations = np.gradient(velocities, times)
         jerks = np.gradient(accelerations, times) 
 
-        axs[1].plot(smooth_traj.ts, np.abs(jerks), label='Jerk_Low_Tol', color='royalblue')
+        axs[1].plot(smooth_traj.ts, np.abs(jerks), label='Low Tolerance', color='royalblue')
         ellipse = Ellipse((0.13, 40), width=0.3, height=80, edgecolor='green', facecolor='none', linestyle='--')
         axs[1].add_patch(ellipse)
         axs[1].grid(True, linestyle='--', linewidth=0.5, color='gray')
 
         axs[1].set_xlabel('Time [s]')
-        axs[0].set_ylabel('X [m]')
-        axs[1].set_ylabel('End-effector Jerk [$m/s^3$]')
+        axs[0].set_ylabel('$x_f^r$ [m]')
+        axs[1].set_ylabel('$||\dddot{p}_f^r||$ [$m/s^3$]')
 
         for ax in axs:
             ax.legend()
@@ -507,7 +529,7 @@ class ToleranceAnalysis:
         # axs[1].set_ylabel('Y position')
         # axs[2].set_ylabel('Z position')
 
-    def plot_traj_with_tols(self, correct_traj):
+    def plot_x_with_tols(self, correct_traj):
 
         self.ts_new = self.ss_new * correct_traj.ts[-1]
         x, y, z = self.demo.positions.T  
@@ -515,6 +537,66 @@ class ToleranceAnalysis:
 
         colors = [
             "maroon",
+            "firebrick",
+            "darkorange",
+            "limegreen",
+            "limegreen",
+            "teal",
+            "teal", 
+            "royalblue"
+            ]
+        # colors = ["black", "blue", "cyan", "green", "yellow", "orange", "red", "magenta"]
+        cmap_name = "custom_div_cmap"
+        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=100)
+        fig, ax = plt.subplots(figsize=(6, 2))        
+        n_segments = len(correct_traj.ts) - 1
+        wps_interp = np.interp(
+        np.linspace(0, 1, n_segments),
+        self.ss_new,
+        self.wp_commands
+        )
+
+        norm = plt.Normalize(wps_interp.min(), wps_interp.max())
+        colors = cm(norm(wps_interp))
+
+        points = np.array([correct_traj.ts, X]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = mcoll.LineCollection(segments, colors=colors, linewidth=2, zorder=2)
+        ax.add_collection(lc)
+        ax.autoscale()
+        ax.fill_between(self.ts_new, x - self.tol_trans, x + self.tol_trans, color='slategray', alpha=0.4, zorder=1)
+        ax.grid(True, linestyle='--', linewidth=0.5, color='gray')
+
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel('$x_f^r$ [m]')
+
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+        sm.set_array([])
+
+
+        # Make space for the colorbar
+        fig.subplots_adjust(right=0.8, bottom=0.25)
+        cbar_ax = fig.add_axes([0.9, 0.28, 0.015, 0.6]) # [left, bottom, width, height]
+        cbar = fig.colorbar(sm, cax=cbar_ax)
+        cbar_ax.yaxis.set_ticks_position('left')
+        cbar.set_label('$R$', rotation=90, labelpad=7)
+
+        # ax.legend()
+
+        # fig.tight_layout(rect=[0, 0, 0.8, 1])
+        plt.show()
+
+
+
+
+    def plot_traj_with_tols(self, correct_traj):
+
+        self.ts_new = self.ss_new * correct_traj.ts[-1]
+        x, y, z = self.demo.positions.T  
+        X, Y, Z = correct_traj.positions.T
+
+        colors = [
+            "firebrick",
             "darkorange",
             "darkorange",
             "limegreen",
@@ -801,29 +883,159 @@ class DMPAnalysis:
     #     s_accelerations = np.gradient(s_velocities, s_times)
     #     s_jerks = np.gradient(s_accelerations, s_times)        
 
-    def plot_abs_jerk(self,original_dmp, smooth_dmp):
+    def calc_abs_jerk(self, traj):
         # Calculate jerk for original_dmp
-        o_velocities = np.array(original_dmp.velocities)
-        o_times = np.array(original_dmp.ts)
-        o_accelerations = np.gradient(o_velocities, o_times, edge_order=1)
-        o_jerks = np.gradient(o_accelerations, o_times, edge_order=1)
-        o_abs_jerks = np.abs(o_jerks)
+        velocities = np.array(traj.velocities)
+        times = np.array(traj.ts)
+        accelerations = np.gradient(velocities, times, edge_order=1)
+        jerks = np.gradient(accelerations, times, edge_order=1)
+        abs_jerks = np.abs(jerks)
+        return abs_jerks
 
-        # Calculate jerk for smooth_dmp
-        s_velocities = np.array(smooth_dmp.velocities)
-        s_times = np.array(smooth_dmp.ts)
-        s_accelerations = np.gradient(s_velocities, s_times, edge_order=1)
-        s_jerks = np.gradient(s_accelerations, s_times, edge_order=1)
-        s_abs_jerks = np.abs(s_jerks)
+
+    def plot_abs_jerk(self,original_dmp, smooth_dmp, scaled_dmp):
 
         # Create plot for jerk comparison
         plt.figure(figsize=(5, 2))
-        plt.plot(o_times, o_abs_jerks, label='Original DMP', linestyle='--', color='royalblue')
-        plt.plot(s_times, s_abs_jerks, label='Smooth DMP', linestyle='-', color='firebrick')
+        plt.plot(original_dmp.ts, self.calc_abs_jerk(original_dmp), label='Original DMP', linestyle='--', color='royalblue')
+        plt.plot(scaled_dmp.ts, self.calc_abs_jerk(scaled_dmp), label='Original DMP - Scaled', linestyle='-.', color='turquoise')
+        plt.plot(smooth_dmp.ts, self.calc_abs_jerk(smooth_dmp), label='Smooth DMP', linestyle='-', color='firebrick')
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
         # plt.title('Absolute Jerk Comparison')
         plt.xlabel('Normalized time s')
         plt.ylabel('|Jerk|')
         plt.legend()
         plt.tight_layout()
+        plt.show()
+
+
+
+    def plot_with_kin_lims(self,scaled_dmp):
+        ts = scaled_dmp.ts
+        data = {
+            "vel [rad/s]": scaled_dmp.yds,
+            "accl [rad/s${}^2$]": scaled_dmp.ydds,
+            "jerk [rad/s${}^3$]": scaled_dmp.yddds
+        }
+        
+        vel_limits = [2, 1.1, 1.5, 1.25, 3, 1.5, 3]
+        acc_limits = [10, 10, 10, 10, 10, 10, 10]
+        jerk_limits = [5000, 5000, 5000, 5000, 5000, 5000, 5000]
+        
+        limits = {
+            "vel [rad/s]": vel_limits,
+            "accl [rad/s${}^2$]": acc_limits,
+            "jerk [rad/s${}^3$]": jerk_limits
+        }
+        
+        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+        
+        plt.figure(figsize=(8, 2.5))
+        
+        for idx, (key, values) in enumerate(data.items()):
+            plt.subplot(1, 3, idx + 1)
+            
+            for i, dof in enumerate(range(7)):  # Assuming 7 DOF
+                
+                color = colors[i]
+                limit = limits[key][i]
+                
+                plt.plot(ts, values[:, i], label=f'Joint {i+1}', linestyle="-", linewidth=2, color="royalblue", alpha=0.5)
+                plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+                # Highlight Violations
+                above_limit = np.where(values[:, i] > limit)
+                plt.scatter(ts[above_limit], values[above_limit, i], color=color, marker='x' , zorder=3)
+                
+            # plt.axhline(limit, color='r', linestyle='--', label=f'{key} Limit')
+            
+            # plt.title(key)
+            plt.xlabel('Time [s]')
+            plt.ylabel(key, labelpad=-5)
+            # plt.legend()
+            
+        plt.tight_layout()
+        plt.show()
+
+
+    def plot_vel_acc_kin_lims(self, scaled_dmp, smooth_dmp):
+        # Different time stamps for scaled_dmp and smooth_dmp
+        ts_scaled = scaled_dmp.ts
+        ts_smooth = smooth_dmp.ts
+
+        vel_limits = [2, 1.1, 1.5, 1.25, 3, 1.5, 3]
+        acc_limits = [10, 10, 10, 10, 10, 10, 10]
+        
+        limits = {
+            "vel [rad/s]": vel_limits,
+            "accl [rad/s${}^2$]": acc_limits
+        }
+        
+        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+        
+        fig, axes = plt.subplots(2, 2, figsize=(5, 4))
+        
+        for idx, name in enumerate(['vel [rad/s]', 'accl [rad/s${}^2$]']):
+            for plot_row, (dmp, ts) in enumerate([(scaled_dmp, ts_scaled), (smooth_dmp, ts_smooth)]):
+                ax = axes[plot_row, idx]
+                
+                if name == 'vel [rad/s]':
+                    values = dmp.yds
+                else:  # 'accl [rad/s${}^2$]'
+                    values = dmp.ydds
+
+                for i, dof in enumerate(range(7)):  # Assuming 7 DOF
+                    color = colors[i]
+                    limit = limits[name][i]
+                    
+                    # Highlight Violations
+                    above_limit = np.where(values[:, i] > limit)
+                    ax.scatter(ts[above_limit], values[above_limit, i], color=color, marker='x' , zorder=3)
+                    
+                    plot_color = colors[i] if above_limit[0].size > 0 else 'royalblue'
+
+                    ax.plot(ts, values[:, i], linestyle="-", linewidth=2, color=plot_color, alpha=0.5)
+                    ax.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+                    
+                # ax.xlabel('Time [s]')
+                # ax.ylabel(name, labelpad=-5)
+
+        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5)
+        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3)
+        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5)
+        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5)
+
+        axes[1, 0].set_xlabel('Time [s]')
+        axes[1, 1].set_xlabel('Time [s]')
+
+                
+        plt.tight_layout()
+        plt.show()
+
+    def plot_compare_jerks(self, scaled_dmp, smooth_dmp):
+        ts_scaled = scaled_dmp.ts
+        ts_smooth = smooth_dmp.ts
+
+        data = {
+            "Scaled DMP $\dddot{q}$ [rad/s${}^3$]": scaled_dmp.yddds,
+            "Smooth DMP $\dddot{q}$ [rad/s${}^3$]": smooth_dmp.yddds
+        }
+
+        fig, axs = plt.subplots(1, 1, figsize=(5, 4))
+
+        for label, values in data.items():
+            # Assuming values is a 2D array where each column represents a DOF
+            for dof in range(values.shape[1]):
+                if label.startswith('Scaled'):
+                    axs.plot(ts_scaled, values[:, dof], color='grey', linestyle="--", linewidth=2, alpha=0.5)
+                else:
+                    axs.plot(ts_smooth, values[:, dof])
+
+        axs.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+        axs.set_ylabel("$\dddot{q}$ [rad/s${}^3$]", labelpad=-4)
+        axs.set_xlabel('time [s]', labelpad=0)
+        # axs.legend(loc='upper right', fontsize='small')
+        
+        plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
         plt.show()

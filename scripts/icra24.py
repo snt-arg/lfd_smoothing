@@ -39,8 +39,10 @@ def tolerance_analysis():
 
     tol_an = ToleranceAnalysis()
     tol_an.import_data("smooth" + demo_name)
-    tol_an.plot_traj_with_tols(correct_traj)
+    # tol_an.plot_traj_with_tols(correct_traj)
+    # tol_an.plot_x_with_tols(correct_traj)
     # tol_an.plot_t_s_command()
+    tol_an.plot_waypoints(smooth_traj.ts[-1], correct_traj.ts[-1])
     return tol_an
 
 def jerk_analysis():
@@ -103,8 +105,13 @@ def dmp_analysis():
     original_cart = CartesianAnalysis()
     original_cart.from_trajectory(original_dmp)
 
+    scaled_dmp = TrajectoryStock()
+    scaled_dmp.import_from_dmp_joint_trajectory("scaled"+demo_name, t_scale=0)
+    scaled_cart = CartesianAnalysis()
+    scaled_cart.from_trajectory(scaled_dmp)
+
     smooth_dmp = TrajectoryStock()
-    smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=1)
+    smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=0)
     smooth_cart = CartesianAnalysis()
     smooth_cart.from_trajectory(smooth_dmp)
 
@@ -115,7 +122,46 @@ def dmp_analysis():
 
     dmp_an = DMPAnalysis()
     # dmp_an.plot_3d(original_dmp, smooth_dmp)
-    dmp_an.plot_abs_jerk(original_dmp, smooth_dmp)
+    # dmp_an.plot_abs_jerk(original_dmp, smooth_dmp)
+    # dmp_an.plot_abs_jerk(original_dmp, smooth_dmp, scaled_dmp)
+    
+    # dmp_an.plot_with_kin_lims(scaled_dmp)
+    # dmp_an.plot_with_kin_lims(smooth_dmp)
+    # dmp_an.plot_vel_acc_kin_lims(scaled_dmp, smooth_dmp)
+    dmp_an.plot_compare_jerks(scaled_dmp,smooth_dmp)
+
+def traj_analysis():
+    def max_abs_jerk(traj:TrajectoryStock):
+        return np.max(np.abs(traj.yddds))
+    
+    def duration(traj:TrajectoryStock):
+        return traj.ts[-1]
+    
+    original_dmp = TrajectoryStock()
+    original_dmp.import_from_dmp_joint_trajectory("filter"+demo_name, t_scale=1)
+    print(max_abs_jerk(original_dmp))
+
+
+    scaled_dmp = TrajectoryStock()
+    scaled_dmp.import_from_dmp_joint_trajectory("scaled"+demo_name, t_scale=1)
+    print(max_abs_jerk(scaled_dmp))
+
+    smooth_dmp = TrajectoryStock()
+    smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=1)
+    print(max_abs_jerk(smooth_dmp))
+
+    # smooth_dmp = TrajectoryStock()
+    # smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=0)
+
+    # original_traj = TrajectoryStock()
+    # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
+    # print(max_abs_jerk(original_traj))
+    # print(duration(original_traj))
+
+    # smooth_traj = TrajectoryStock()
+    # smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
+    # print(max_abs_jerk(smooth_traj))
+    # print(duration(smooth_traj))
 
 if __name__ == '__main__':
 
@@ -128,10 +174,17 @@ if __name__ == '__main__':
     # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
     # original_traj.plot() 
 
+    # demo_name = "picknplaceee0"
     # tol_an = tolerance_analysis2()
+
     # velocity_adjustment_analysis()
 
+    # tolerance_analysis()
+
     dmp_analysis()
+
+
+    # traj_analysis()
 
 
     # rospy.spin()
