@@ -271,6 +271,9 @@ class TrajectoryOptimizer:
 
 
     def plot_trajectory(self, composite_traj):
+        plt.rcParams['pdf.fonttype'] = 42
+        plt.rcParams['ps.fonttype'] = 42
+        plt.rcParams['mathtext.default'] = 'regular'
 
         PublishPositionTrajectory(
             composite_traj, self.robot.context, self.robot.plant, self.robot.visualizer
@@ -282,17 +285,17 @@ class TrajectoryOptimizer:
         ts = np.linspace(0, composite_traj.end_time(), 1000)
         
         data = {
-            "${q}_t$ [rad]": [],
-            "$\dot{q}_t$ [rad/s]": [],
-            "$\ddot{q}_t$ [rad/s${}^2$]": [],
-            "$\dddot{q}_t$ [rad/s${}^3$]": []
+            "${q}_f$ [rad]": [],
+            "$\dot{q}_f$ [rad/s]": [],
+            "$\ddot{q}_f$ [rad/s${}^2$]": [],
+            "$\dddot{q}_f$ [rad/s${}^3$]": []
         }
         
         for t in ts:
-            data["${q}_t$ [rad]"].append(composite_traj.value(t))
-            data["$\dot{q}_t$ [rad/s]"].append(composite_traj.MakeDerivative().value(t))
-            data["$\ddot{q}_t$ [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
-            data["$\dddot{q}_t$ [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
+            data["${q}_f$ [rad]"].append(composite_traj.value(t))
+            data["$\dot{q}_f$ [rad/s]"].append(composite_traj.MakeDerivative().value(t))
+            data["$\ddot{q}_f$ [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
+            data["$\dddot{q}_f$ [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
         
         fig, axs = plt.subplots(2, 2, figsize=(5,4))
         axs = axs.ravel()
@@ -301,7 +304,7 @@ class TrajectoryOptimizer:
             axs[idx].plot(ts, np.array(values).squeeze(axis=2))
             # axs[idx].set_title(label)
             axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-            axs[idx].set_ylabel(label, labelpad=-4)
+            axs[idx].set_ylabel(label, labelpad=-4, fontsize=12)
             
             if idx >= 2:  # Only set x-label for the bottom subplots
                 axs[idx].set_xlabel('time [s]', labelpad=0)

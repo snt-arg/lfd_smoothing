@@ -21,6 +21,9 @@ import matplotlib.collections as mcoll
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Ellipse
 
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['mathtext.default'] = 'regular'
 
 class TrajectoryStock:
 
@@ -150,7 +153,7 @@ class TrajectoryStock:
             axs[idx].plot(ts, np.array(values))
             # axs[idx].set_title(label)
             axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-            axs[idx].set_ylabel(label, labelpad=-4)
+            axs[idx].set_ylabel(label, labelpad=-4, fontsize=12)
             
             if idx >= 2:  # Only set x-label for the bottom subplots
                 axs[idx].set_xlabel('time [s]', labelpad=0)
@@ -416,7 +419,7 @@ class ToleranceAnalysis:
         plt.plot(self.ts, self.commands, label='$s_r(t)$', color='firebrick')
         # Grids and Background
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')        
-        plt.xlabel('Time (t)')
+        plt.xlabel('Time [s]')
         plt.ylabel('Deceleration command R(t)')
         plt.legend()
         plt.tight_layout()
@@ -432,7 +435,7 @@ class ToleranceAnalysis:
         plt.plot(t_new, s_new, label=f'$s(t) = V_0^r \cdot t$', linestyle='--', color='royalblue')
         # Grids and Background
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')        
-        plt.xlabel('Time (t)')
+        plt.xlabel('Time [s]]')
         plt.ylabel('Normalized time (s)')
         plt.legend()
         plt.tight_layout()
@@ -446,7 +449,7 @@ class ToleranceAnalysis:
         plt.plot(self.ts, self.commands, label='$R(t)$', color='firebrick')
         plt.axvline(x=2.958, color='green', linestyle='-.')
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
-        plt.xlabel('Time (t)')
+        plt.xlabel('Time [s]')
         plt.ylabel('R')
         plt.legend()
 
@@ -461,7 +464,7 @@ class ToleranceAnalysis:
         
         plt.axvline(x=2.958, color='green', linestyle='-.')
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
-        # plt.xlabel('Time (t)')
+        # plt.xlabel('Time [s]')
         plt.ylabel('s')
         plt.legend()
 
@@ -971,7 +974,7 @@ class DMPAnalysis:
             "accl [rad/s${}^2$]": acc_limits
         }
         
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+        colors = ['r', 'r', 'r', 'r', 'r', 'r', 'r']
         
         fig, axes = plt.subplots(2, 2, figsize=(5, 4))
         
@@ -990,26 +993,33 @@ class DMPAnalysis:
                     
                     # Highlight Violations
                     above_limit = np.where(values[:, i] > limit)
-                    ax.scatter(ts[above_limit], values[above_limit, i], color=color, marker='x' , zorder=3)
+                    ax.scatter(ts[above_limit], values[above_limit, i], label="violation", color=color, marker='o' , s=10,  zorder=3, alpha=0.7)
                     
-                    plot_color = colors[i] if above_limit[0].size > 0 else 'royalblue'
+                    # plot_color = colors[i] if above_limit[0].size > 0 else 'royalblue'
+                    plot_color = 'royalblue'
 
-                    ax.plot(ts, values[:, i], linestyle="-", linewidth=2, color=plot_color, alpha=0.5)
+                    ax.plot(ts, values[:, i], linestyle="-", label="trajectory",  linewidth=1.5, color=plot_color, alpha=0.7)
                     ax.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
 
                     
                 # ax.xlabel('Time [s]')
                 # ax.ylabel(name, labelpad=-5)
 
-        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5)
-        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3)
-        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5)
-        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5)
+        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5, fontsize=10)
+        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3, fontsize=10)
+        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5, fontsize=10)
+        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5, fontsize=10)
 
         axes[1, 0].set_xlabel('Time [s]')
         axes[1, 1].set_xlabel('Time [s]')
 
-                
+        # Get the handles and labels
+        handles, labels = axes[0,1].get_legend_handles_labels()
+
+        # Use a dictionary to remove duplicates
+        unique = {label: handle for handle, label in zip(handles, labels)}
+
+        plt.legend(unique.values(), unique.keys(), loc='upper right', fontsize=8, markerscale=1)
         plt.tight_layout()
         plt.show()
 
@@ -1022,20 +1032,42 @@ class DMPAnalysis:
             "Smooth DMP $\dddot{q}$ [rad/s${}^3$]": smooth_dmp.yddds
         }
 
-        fig, axs = plt.subplots(1, 1, figsize=(5, 4))
-
+        fig, ax1 = plt.subplots(1, 1, figsize=(5, 4))
+        ax2 =  ax1.twinx()
+        color1 = "steelblue"
+        color2 = (0.5, 0.0, 0.0)
         for label, values in data.items():
             # Assuming values is a 2D array where each column represents a DOF
             for dof in range(values.shape[1]):
                 if label.startswith('Scaled'):
-                    axs.plot(ts_scaled, values[:, dof], color='grey', linestyle="--", linewidth=2, alpha=0.5)
-                else:
-                    axs.plot(ts_smooth, values[:, dof])
+                    ax1.plot(ts_scaled, values[:, dof], color=color1, linestyle="-", linewidth=2, alpha=0.5)
+                    ax1.tick_params(axis='y', labelcolor=color1)
+                else: # Smooth
+                    ax2.plot(ts_smooth, values[:, dof], color=color2, linewidth=2,  alpha=0.6)
+                    ax2.tick_params(axis='y', labelcolor=color2)
+                    # ymin, ymax = ax2.get_ylim()
+                    ax2.set_ylim(-450, 450)
 
-        axs.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-        axs.set_ylabel("$\dddot{q}$ [rad/s${}^3$]", labelpad=-4)
-        axs.set_xlabel('time [s]', labelpad=0)
-        # axs.legend(loc='upper right', fontsize='small')
+        y_max_scaled = np.max(scaled_dmp.yddds)
+        y_min_scaled = np.min(scaled_dmp.yddds)
+        y_max_smooth = np.max(smooth_dmp.yddds)
+        y_min_smooth = np.min(smooth_dmp.yddds)
+
+        ax1.axhline(y=y_max_scaled, color=color1, linestyle='--')  # you can adjust color and linestyle as needed
+        ax1.text(0.6, y_max_scaled - 10, f'Maximum: {y_max_scaled:.2f}', color=color1, verticalalignment='top')
+        ax1.axhline(y=y_min_scaled, color=color1, linestyle='--')  # you can adjust color and linestyle as needed
+        ax1.text(0.6, y_min_scaled, f'Minimum: {y_min_scaled:.2f}', color=color1, verticalalignment='bottom')
+
+        ax2.text(0.6, y_max_smooth + 10 , f'Maximum: {y_max_smooth:.2f}', color=color2, verticalalignment='bottom')
+        ax2.axhline(y=y_max_smooth, color=color2, linestyle='--')  # you can adjust color and linestyle as needed
+        ax2.axhline(y=y_min_smooth, color=color2, linestyle='--')  # you can adjust color and linestyle as needed
+        ax2.text(0.6, y_min_smooth - 10, f'Minimum: {y_min_smooth:.2f}', color=color2, verticalalignment='top')
+
+        # ax1.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+        ax1.set_ylabel("$\dddot{q}_{s,dmp}$ [rad/s${}^3$]", labelpad=-4, color=color1, fontsize=12)
+        ax2.set_ylabel("$\dddot{q}_{f,dmp}$ [rad/s${}^3$]", labelpad=4, color=color2, fontsize=12)
+        ax1.set_xlabel('time [s]', labelpad=0)
+        # ax1.legend(loc='upper right', fontsize='small')
         
         plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
         plt.show()
