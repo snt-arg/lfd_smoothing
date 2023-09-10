@@ -20,6 +20,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.collections as mcoll
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Ellipse
+from matplotlib import transforms
+
 
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
@@ -396,7 +398,7 @@ class ToleranceAnalysis:
     def plot_waypoints(self, smooth_duration, correct_duration):       
         x, y, z = self.demo.positions.T
         
-        plt.figure(figsize=(6, 2))
+        plt.figure(figsize=(6, 1.6))
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')        
         # Plotting original waypoints
         plt.scatter(self.ss_original*smooth_duration, y, c='royalblue', marker='+', label=f'Before refinement', alpha=0.5)
@@ -405,10 +407,10 @@ class ToleranceAnalysis:
         plt.scatter(self.ss_new*correct_duration, y, c='firebrick', marker='*', label=f'After refinement')
 
         # Adding labels, title, and legend
-        plt.xlabel('Time [s]')
-        plt.ylabel('$y_{w_i}$ [m]')
+        plt.xlabel('Time [s]', fontsize=11)
+        plt.ylabel('$y_{w_i}$ [m]', fontsize=12)
         # plt.title('Waypoint Comparisons')
-        plt.legend()
+        plt.legend(fontsize=9)
 
         # Adding grid for better readability
         plt.tight_layout()
@@ -482,12 +484,18 @@ class ToleranceAnalysis:
         XX, YY, ZZ = smooth_traj.positions.T
         TTs = smooth_traj.ts #/ smooth_traj.ts[-1]
 
-        fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 3.5))
+        fig, axs = plt.subplots(2, 1, sharex=True, figsize=(6, 3))
 
-        axs[0].plot(Ts, X, label='High Tolerance' , color='firebrick', linewidth=2)
-        axs[0].plot(TTs, XX, label='Low Tolerance'  , color='royalblue', linewidth=2)
-        axs[0].fill_between(self.ss_original * correct_traj.ts[-1], x - self.tol_trans, x + self.tol_trans, color='firebrick', alpha=0.2)
-        axs[0].fill_between(self.ss_original * smooth_traj.ts[-1], x - tol_default, x + tol_default, color='royalblue', alpha=0.2)
+        l1, = axs[0].plot(Ts, X, label='$x_f^r$ - high tol.' , color='firebrick', linewidth=2)
+        axs[0].axvline(x=Ts[-1], color='firebrick', linestyle='-.', linewidth=1.5, alpha=0.7)
+        axs[0].text(Ts[-1]-0.17, 0.25, f'{Ts[-1]:.2f} s', fontsize=8, color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc="firebrick", alpha=0.3))
+
+        l2, = axs[0].plot(TTs, XX, label='$x_f^r$ - low tol.'  , color='royalblue', linewidth=2)
+        axs[0].axvline(x=TTs[-1], color='royalblue', linestyle='-.', linewidth=1.5, alpha=0.7)
+        axs[0].text(TTs[-1]-0.17, 0.25, f'{TTs[-1]:.2f} s', fontsize=8, color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc="royalblue", alpha=0.3))
+
+        l3 = axs[0].fill_between(self.ss_original * correct_traj.ts[-1], x - self.tol_trans, x + self.tol_trans, color='firebrick', alpha=0.2, label="tolerance=5cm")
+        l4 = axs[0].fill_between(self.ss_original * smooth_traj.ts[-1], x - tol_default, x + tol_default, color='royalblue', alpha=0.2, label="tolerance=2cm")
         axs[0].grid(True, linestyle='--', linewidth=0.5, color='gray')
 
 
@@ -496,41 +504,43 @@ class ToleranceAnalysis:
         accelerations = np.gradient(velocities, times)
         jerks = np.gradient(accelerations, times)
 
-        axs[1].plot(correct_traj.ts, np.abs(jerks), label='High Tolerance', color='firebrick')
+        axs[1].plot(correct_traj.ts, np.abs(jerks), label='$x_f^r$ - high tol.', color='firebrick')
+        axs[1].axhline(y=np.max(np.abs(jerks)), color="firebrick", linestyle='--', alpha=0.7)
+        axs[1].text(0.75, np.max(np.abs(jerks)) - 3, f'Maximum: {np.max(np.abs(jerks)):.2f}', color="firebrick", verticalalignment='top')
+
+        # bbox = dict(boxstyle="round", fc="blue")
+        # tform = transforms.blended_transform_factory(axs[0].transData, axs[0].transAxes) 
+        # axs[0].annotate('{:.2g}s'.format(np.max(np.abs(jerks))), 
+        #                 xy=(1, np.max(np.abs(jerks))), 
+        #                 bbox=bbox, 
+        #                 xycoords=tform)
+
+
 
         velocities = np.array(smooth_traj.velocities)
         times = np.array(smooth_traj.ts)
         accelerations = np.gradient(velocities, times)
         jerks = np.gradient(accelerations, times) 
 
-        axs[1].plot(smooth_traj.ts, np.abs(jerks), label='Low Tolerance', color='royalblue')
-        ellipse = Ellipse((0.13, 40), width=0.3, height=80, edgecolor='green', facecolor='none', linestyle='--')
-        axs[1].add_patch(ellipse)
+        axs[1].plot(smooth_traj.ts, np.abs(jerks), label='$x_f^r$ - low tol.', color='royalblue')
+        axs[1].axhline(y=np.max(np.abs(jerks)), color="royalblue", linestyle='--', alpha=0.7)
+        axs[1].text(0.75, np.max(np.abs(jerks)) - 3, f'Maximum: {np.max(np.abs(jerks)):.2f}', color="royalblue", verticalalignment='top')
+        # ellipse = Ellipse((0.13, 40), width=0.3, height=80, edgecolor='green', facecolor='none', linestyle='--')
+        # axs[1].add_patch(ellipse)
         axs[1].grid(True, linestyle='--', linewidth=0.5, color='gray')
 
-        axs[1].set_xlabel('Time [s]')
-        axs[0].set_ylabel('$x_f^r$ [m]')
-        axs[1].set_ylabel('$||\dddot{p}_f^r||$ [$m/s^3$]')
+        axs[1].set_xlabel('Time [s]', fontsize=11)
+        axs[0].set_ylabel('$x_f^r$ $[m]$', fontsize=12)
+        axs[1].set_ylabel('$||\dddot{p}_f^r||$ [$m/s^3$]', fontsize=12)
 
-        for ax in axs:
-            ax.legend()
+        legend = axs[0].legend(handles=[l3,l4], fontsize=9, markerscale=1, loc='upper left')
+        axs[0].add_artist(legend)
+        # axs[0].legend(handles=[l1,l2], fontsize=9, markerscale=1, loc='lower right')
+        axs[1].legend(fontsize=9, markerscale=1)
 
         plt.tight_layout()
         plt.show()
 
-
-        # axs[1].plot(correct_ntraj.ts, Y, label='Y_High_Tol', color='firebrick')
-        # axs[1].plot(smooth_ntraj.ts, YY, label='Y_Low_Tol', color='royalblue')
-        # axs[1].fill_between(self.ss_original, y - self.tol_trans, y + self.tol_trans, color='firebrick', alpha=0.2)
-        # axs[1].fill_between(self.ss_original, y - tol_default, y + tol_default, color='royalblue', alpha=0.2)
-        
-        # axs[2].plot(correct_ntraj.ts, Z, label='Z_High_Tol', color='firebrick')
-        # axs[2].plot(smooth_ntraj.ts, ZZ, label='Z_Low_Tol', color='royalblue')
-        # axs[2].fill_between(self.ss_original, z - self.tol_trans, z + self.tol_trans, color='firebrick', alpha=0.2)
-        # axs[2].fill_between(self.ss_original, z - tol_default, z + tol_default, color='royalblue', alpha=0.2)
-    
-        # axs[1].set_ylabel('Y position')
-        # axs[2].set_ylabel('Z position')
 
     def plot_x_with_tols(self, correct_traj):
 
@@ -567,29 +577,40 @@ class ToleranceAnalysis:
         lc = mcoll.LineCollection(segments, colors=colors, linewidth=2, zorder=2)
         ax.add_collection(lc)
         ax.autoscale()
-        ax.fill_between(self.ts_new, x - self.tol_trans, x + self.tol_trans, color='slategray', alpha=0.4, zorder=1)
+        ax.fill_between(self.ts_new, x - self.tol_trans, x + self.tol_trans, 
+                        color='slategray', alpha=0.4, zorder=1, label="tolerance bounds")
         ax.grid(True, linestyle='--', linewidth=0.5, color='gray')
 
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel('$x_f^r$ [m]')
+        ax.set_xlabel('Time [s]', fontsize=11)
+        ax.set_ylabel('$x_f^r$ [m]', fontsize=12)
 
         sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
         sm.set_array([])
 
+        fig.subplots_adjust(top = 0.7, bottom = 0.25, right=0.94, left=0.12,
+                    hspace = 0, wspace = 0)
+        # ax.margins(0,0)
+        # fig.subplots_adjust(top=0.72, bottom=0.25)
 
-        # Make space for the colorbar
-        fig.subplots_adjust(right=0.8, bottom=0.25)
-        cbar_ax = fig.add_axes([0.9, 0.28, 0.015, 0.6]) # [left, bottom, width, height]
-        cbar = fig.colorbar(sm, cax=cbar_ax)
-        cbar_ax.yaxis.set_ticks_position('left')
-        cbar.set_label('$R$', rotation=90, labelpad=7)
-
-        # ax.legend()
-
-        # fig.tight_layout(rect=[0, 0, 0.8, 1])
+        cbar_ax = fig.add_axes([0.15, 0.84, 0.75, 0.05])  # [left, bottom, width, height]
+        cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
+        cbar.set_label('$R$', rotation=0, labelpad=-37)
+        ax.legend(loc='lower right')
+        # fig.tight_layout(rect=[0, 1, 0, 0])
         plt.show()
 
 
+        # # Make space for the colorbar
+        # fig.subplots_adjust(right=0.8, bottom=0.30)
+        # cbar_ax = fig.add_axes([0.9, 0.28, 0.015, 0.6]) # [left, bottom, width, height]
+        # cbar = fig.colorbar(sm, cax=cbar_ax)
+        # cbar_ax.yaxis.set_ticks_position('left')
+        # cbar.set_label('$R$', rotation=90, labelpad=7)
+
+        # ax.legend(loc='lower right')
+
+        # # fig.tight_layout(rect=[0, 0, 0.8, 1])
+        # plt.show()
 
 
     def plot_traj_with_tols(self, correct_traj):
@@ -857,20 +878,20 @@ class DMPAnalysis:
         ax_traj = fig.add_subplot(111, projection='3d')
         
         # Plot original DMP
-        ax_traj.plot(original_dmp.positions[:, 0], original_dmp.positions[:, 1], original_dmp.positions[:, 2], label='Original DMP', linestyle='--', color='royalblue')
+        ax_traj.plot(original_dmp.positions[:, 0], original_dmp.positions[:, 1], original_dmp.positions[:, 2], label='$p_{o,dmp}$', linestyle='--', color='royalblue')
         
         # Plot smooth DMP
-        ax_traj.plot(smooth_dmp.positions[:, 0], smooth_dmp.positions[:, 1], smooth_dmp.positions[:, 2], label='Smooth DMP', linestyle='-', color='firebrick')
+        ax_traj.plot(smooth_dmp.positions[:, 0], smooth_dmp.positions[:, 1], smooth_dmp.positions[:, 2], label='$p_{f,dmp}$', linestyle='-', color='firebrick')
 
         # ax_traj.plot(original_traj.positions[:, 0], original_traj.positions[:, 1], original_traj.positions[:, 2], label='Traj', linestyle='--', color='g')
 
         # ax_traj.set_title('3D Trajectory')
-        ax_traj.set_xlabel('X')
-        ax_traj.set_ylabel('Y')
-        ax_traj.set_zlabel('Z')
+        ax_traj.set_xlabel('x [m]')
+        ax_traj.set_ylabel('y [m]')
+        ax_traj.set_zlabel('z [m]')
         
         # Add legend to differentiate the original and smooth DMP
-        ax_traj.legend()
+        ax_traj.legend(fontsize=12)
         
         # plt.tight_layout()
         plt.show()
@@ -1005,13 +1026,13 @@ class DMPAnalysis:
                 # ax.xlabel('Time [s]')
                 # ax.ylabel(name, labelpad=-5)
 
-        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5, fontsize=10)
-        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3, fontsize=10)
-        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5, fontsize=10)
-        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5, fontsize=10)
+        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5, fontsize=12)
+        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3, fontsize=12)
+        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5, fontsize=12)
+        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5, fontsize=12)
 
-        axes[1, 0].set_xlabel('Time [s]')
-        axes[1, 1].set_xlabel('Time [s]')
+        axes[1, 0].set_xlabel('Time [s]', fontsize=11)
+        axes[1, 1].set_xlabel('Time [s]', fontsize=11)
 
         # Get the handles and labels
         handles, labels = axes[0,1].get_legend_handles_labels()
@@ -1019,7 +1040,7 @@ class DMPAnalysis:
         # Use a dictionary to remove duplicates
         unique = {label: handle for handle, label in zip(handles, labels)}
 
-        plt.legend(unique.values(), unique.keys(), loc='upper right', fontsize=8, markerscale=1)
+        plt.legend(unique.values(), unique.keys(), loc='upper right', fontsize=9, markerscale=1)
         plt.tight_layout()
         plt.show()
 
@@ -1040,7 +1061,7 @@ class DMPAnalysis:
             # Assuming values is a 2D array where each column represents a DOF
             for dof in range(values.shape[1]):
                 if label.startswith('Scaled'):
-                    ax1.plot(ts_scaled, values[:, dof], color=color1, linestyle="-", linewidth=2, alpha=0.5)
+                    ax1.plot(ts_scaled, values[:, dof], color=color1, linestyle="-", linewidth=2, alpha=0.7)
                     ax1.tick_params(axis='y', labelcolor=color1)
                 else: # Smooth
                     ax2.plot(ts_smooth, values[:, dof], color=color2, linewidth=2,  alpha=0.6)
@@ -1054,19 +1075,19 @@ class DMPAnalysis:
         y_min_smooth = np.min(smooth_dmp.yddds)
 
         ax1.axhline(y=y_max_scaled, color=color1, linestyle='--')  # you can adjust color and linestyle as needed
-        ax1.text(0.6, y_max_scaled - 10, f'Maximum: {y_max_scaled:.2f}', color=color1, verticalalignment='top')
+        ax1.text(0.6, y_max_scaled - 50, f'Maximum: {y_max_scaled:.2f}', color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc=color1, alpha=0.3))
         ax1.axhline(y=y_min_scaled, color=color1, linestyle='--')  # you can adjust color and linestyle as needed
-        ax1.text(0.6, y_min_scaled, f'Minimum: {y_min_scaled:.2f}', color=color1, verticalalignment='bottom')
+        ax1.text(0.6, y_min_scaled + 55, f'Minimum: {y_min_scaled:.2f}', color="black", verticalalignment='bottom', bbox = dict(boxstyle="round", fc=color1, alpha=0.3))
 
-        ax2.text(0.6, y_max_smooth + 10 , f'Maximum: {y_max_smooth:.2f}', color=color2, verticalalignment='bottom')
+        ax2.text(0.6, y_max_smooth + 20 , f'Maximum: {y_max_smooth:.2f}', color="black", verticalalignment='bottom', bbox = dict(boxstyle="round", fc=color2, alpha=0.3))
         ax2.axhline(y=y_max_smooth, color=color2, linestyle='--')  # you can adjust color and linestyle as needed
         ax2.axhline(y=y_min_smooth, color=color2, linestyle='--')  # you can adjust color and linestyle as needed
-        ax2.text(0.6, y_min_smooth - 10, f'Minimum: {y_min_smooth:.2f}', color=color2, verticalalignment='top')
+        ax2.text(0.6, y_min_smooth - 20, f'Minimum: {y_min_smooth:.2f}', color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc=color2, alpha=0.3))
 
         # ax1.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-        ax1.set_ylabel("$\dddot{q}_{s,dmp}$ [rad/s${}^3$]", labelpad=-4, color=color1, fontsize=12)
-        ax2.set_ylabel("$\dddot{q}_{f,dmp}$ [rad/s${}^3$]", labelpad=4, color=color2, fontsize=12)
-        ax1.set_xlabel('time [s]', labelpad=0)
+        ax1.set_ylabel("$\dddot{q}_{s,dmp}$ [rad/s${}^3$]", labelpad=-4, color=color1, fontsize=14)
+        ax2.set_ylabel("$\dddot{q}_{f,dmp}$ [rad/s${}^3$]", labelpad=4, color=color2, fontsize=14)
+        ax1.set_xlabel('Time [s]', labelpad=0, fontsize=12)
         # ax1.legend(loc='upper right', fontsize='small')
         
         plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
