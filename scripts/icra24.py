@@ -40,9 +40,9 @@ def tolerance_analysis():
     tol_an = ToleranceAnalysis()
     tol_an.import_data("smooth" + demo_name)
     # tol_an.plot_traj_with_tols(correct_traj)
-    tol_an.plot_x_with_tols(correct_traj)
+    # tol_an.plot_x_with_tols(correct_traj)
     # tol_an.plot_t_s_command()
-    # tol_an.plot_waypoints(smooth_traj.ts[-1], correct_traj.ts[-1])
+    tol_an.plot_waypoints(smooth_traj.ts[-1], correct_traj.ts[-1])
     return tol_an
 
 def jerk_analysis():
@@ -179,9 +179,9 @@ if __name__ == '__main__':
 
     # velocity_adjustment_analysis()
 
-    # tolerance_analysis()
+    tolerance_analysis()
 
-    dmp_analysis()
+    # dmp_analysis()
 
 
     # traj_analysis()

@@ -382,6 +382,7 @@ class ToleranceAnalysis:
         self.ts = self.metadata["ts"]
         self.ss = self.metadata["ss"]
         self.commands = self.metadata["commands"]
+        self.cmds_raw = np.array(self.metadata["cmd_raw"])
         self.ss_original = np.array(self.ts_original) / self.ts_original[-1]
         # self.ts_original = np.array(self.ts_original) * float(smooth_traj.ts[-1]) / self.ts_original[-1]
         
@@ -448,11 +449,14 @@ class ToleranceAnalysis:
 
         # First plot (2x1 grid, first subplot)
         plt.subplot(2, 1, 2)
+        plt.plot(self.ts, self.map_range(self.cmds_raw), label='$C(t)$', color='slategrey')
         plt.plot(self.ts, self.commands, label='$R(t)$', color='firebrick')
-        plt.axvline(x=2.958, color='green', linestyle='-.')
+        plt.axvline(x=1, color='green', linestyle='-.')
+        # plt.text(0.2, -0.5, "$t^*$", fontsize=10, color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc="tab:green", alpha=0.2))
+
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
         plt.xlabel('Time [s]')
-        plt.ylabel('R')
+        # plt.ylabel('R')
         plt.legend()
 
         # Second plot (2x1 grid, second subplot)
@@ -464,14 +468,25 @@ class ToleranceAnalysis:
         s_new = v0 * t_new
         plt.plot(t_new, s_new, label=f'$s(t) = V_0^r \cdot t$', linestyle='--', color='royalblue')
         
-        plt.axvline(x=2.958, color='green', linestyle='-.')
+        plt.axvline(x=1, color='green', linestyle='-.')
+        plt.text(0.2, 0.7, "$t^*$", fontsize=10, color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc="tab:green", alpha=0.2))
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
         # plt.xlabel('Time [s]')
-        plt.ylabel('s')
+        # plt.ylabel('s')
         plt.legend()
 
         plt.tight_layout()
         plt.show()
+
+    def map_range(self,value):
+        input_range = [1, -1]  # input range
+        output_range = [0,-1]  # desired output range
+
+        # line equation parameters
+        slope = (output_range[1] - output_range[0]) / (input_range[1] - input_range[0])
+        intercept = output_range[0] - slope * input_range[0]
+
+        return slope * value + intercept
 
     def plot_normalized(self, smooth_traj, correct_traj):
         tol_default = 0.02
