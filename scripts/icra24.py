@@ -7,10 +7,39 @@ import matplotlib.pyplot as plt
 
 from std_msgs.msg import Float64, Float64MultiArray
 from sensor_msgs.msg import JointState
+from trajectory_msgs.msg import JointTrajectory
 
 from pydrake.all import *
 
 from lfd_smoother.util.icra import TrajectoryStock, TorqueAnalysis, CartesianAnalysis, ToleranceAnalysis, JerkAnalysis, DMPAnalysis
+
+
+import actionlib
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+
+def send_trajectory(joint_trajectory):
+    # Initialize the action client
+    client = actionlib.SimpleActionClient('/position_joint_trajectory_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+    
+    # Wait for the action server to come up
+    rospy.loginfo("Waiting for action server...")
+    client.wait_for_server()
+    rospy.loginfo("Action server detected!")
+
+    # Create and populate the goal message
+    goal = FollowJointTrajectoryGoal()
+    goal.trajectory = joint_trajectory
+
+    # Send the goal
+    client.send_goal(goal)
+    rospy.loginfo("Trajectory sent!")
+
+    # Optionally, wait for the action to complete
+    client.wait_for_result()
+    return client.get_result()
+
+
 
     # f = FrequencyAnalysis()
     # f.run(demo_name)
@@ -179,7 +208,7 @@ if __name__ == '__main__':
 
     # velocity_adjustment_analysis()
 
-    tolerance_analysis()
+    # tolerance_analysis()
 
     # dmp_analysis()
 
@@ -188,3 +217,20 @@ if __name__ == '__main__':
 
 
     # rospy.spin()
+
+
+
+    correct_traj = TrajectoryStock()
+    correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
+    traj = correct_traj.to_joint_trajectory()
+
+
+    # smooth_traj = TrajectoryStock()
+    # smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
+    # traj = smooth_traj.to_joint_trajectory()
+
+    # original_traj = TrajectoryStock()
+    # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
+    # traj = original_traj.to_joint_trajectory()
+
+    send_trajectory(traj)

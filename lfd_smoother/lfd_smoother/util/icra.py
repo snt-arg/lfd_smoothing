@@ -10,6 +10,8 @@ from lfd_interface.srv import GetDemonstration
 
 from std_msgs.msg import Float64, Float64MultiArray
 from sensor_msgs.msg import JointState
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
 
 
 from pydrake.all import *
@@ -162,6 +164,30 @@ class TrajectoryStock:
             
         plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
         plt.show()
+
+    def to_joint_trajectory(self):
+        joint_trajectory = JointTrajectory()
+        
+        # Assuming you have joint names stored somewhere in the class, 
+        # if not you might need to pass them as an argument or get them from another source
+        joint_trajectory.joint_names = ["fr3_joint1", "fr3_joint2", "fr3_joint3", "fr3_joint4", "fr3_joint5", "fr3_joint6", "fr3_joint7"]
+        
+        for i in range(len(self.ts)):
+            point = JointTrajectoryPoint()
+            point.positions = self.ys[i]
+            
+            # Assuming you want to also set velocities, accelerations, etc. if they are available
+            if len(self.yds) > i:
+                point.velocities = self.yds[i]
+            if len(self.ydds) > i:
+                point.accelerations = self.ydds[i]
+            # if len(self.yddds) > i:
+            #     point.effort = self.yddds[i]  # Assuming effort is the third derivative, adjust if different
+            
+            point.time_from_start = rospy.Duration.from_sec(self.ts[i])
+            joint_trajectory.points.append(point)
+        
+        return joint_trajectory
 
 
 class FrequencyAnalysis:
