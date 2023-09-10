@@ -3,6 +3,8 @@ import rospy
 from std_msgs.msg import Float64
 import matplotlib.pyplot as plt
 from scipy import interpolate
+from sensor_msgs.msg import Joy
+
 
 from datetime import datetime
 
@@ -61,17 +63,20 @@ class Refinement(object):
         self.ts = []
         self.ss = []
         self.commands = []
+        self.cmds_raw = []
 
-    def update(self, t, s, command):
+    def update(self, t, s, command, cmd_raw):
         self.ts.append(t)
         self.ss.append(s)
         self.commands.append(command)
+        self.cmds_raw.append(cmd_raw)
     
     def export_metadata(self):
         metadata = {}
         metadata["ts"] = self.ts
         metadata["ss"] = self.ss
         metadata["commands"] = self.commands
+        metadata["cmd_raw"] = self.cmds_raw
         return metadata
     
     def export_tolerances(self, min_trans, max_trans, min_rot, max_rot):
@@ -199,14 +204,20 @@ class AccelerationSystem(object):
 
         self.y_attr = 0
         self.init_dynamic_system(tau=0.1, y_init=0, y_attr=0, alpha=20)
+        self.raw_command=1
 
         rospy.Subscriber(self.in_topic, Float64, self.cb_joystick)
+        rospy.Subscriber('/joy_latched', Joy, self.cb_raw_command)
+
 
         self.particle = Particle(duration)
         self.duration = duration
 
         self.t_start = rospy.Time.now().to_sec()
         self.t = self.t_start
+
+    def cb_raw_command(self, msg: Joy):
+        self.raw_command = msg.axes[5]
 
     def init_dynamic_system(self, tau, y_init, y_attr, alpha):
         self.spring_system = SpringDamperSystem(tau, y_init, y_attr, alpha)
@@ -232,4 +243,4 @@ class AccelerationSystem(object):
         self.t = rospy.Time.now().to_sec()
         t = self.t - self.t_start
         s=self.particle.position(t,self.x[0])
-        return t,s,self.x[0]
+        return t,s,self.x[0], self.raw_command

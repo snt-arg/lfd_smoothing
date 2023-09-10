@@ -59,11 +59,11 @@ if __name__ == '__main__':
     rate = rospy.Rate(50)
 
     while (not rospy.is_shutdown()) and s!=1:
-        t,s,command = acc_sys.run()
+        t,s,command, cmd_raw = acc_sys.run()
         msg = Float64MultiArray()
         msg.data = ntraj.value(s)
         pub_robot.publish(msg)
-        recorder.update(t,s,command)
+        recorder.update(t,s,command, cmd_raw)
         rate.sleep()
 
     metadata = recorder.export_metadata()
