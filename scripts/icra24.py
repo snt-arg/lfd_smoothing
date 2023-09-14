@@ -156,8 +156,8 @@ def dmp_analysis():
     
     # dmp_an.plot_with_kin_lims(scaled_dmp)
     # dmp_an.plot_with_kin_lims(smooth_dmp)
-    # dmp_an.plot_vel_acc_kin_lims(scaled_dmp, smooth_dmp)
-    dmp_an.plot_compare_jerks(scaled_dmp,smooth_dmp)
+    dmp_an.plot_vel_acc_kin_lims(scaled_dmp, smooth_dmp)
+    # dmp_an.plot_compare_jerks(scaled_dmp,smooth_dmp)
 
 def traj_analysis():
     def max_abs_jerk(traj:TrajectoryStock):
@@ -199,9 +199,9 @@ if __name__ == '__main__':
 
     demo_name = "picknplace0"
 
-    # original_traj = TrajectoryStock()
-    # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
-    # original_traj.plot() 
+    original_traj = TrajectoryStock()
+    original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
+    original_traj.plot() 
 
     # demo_name = "picknplaceee0"
     # tol_an = tolerance_analysis2()
@@ -220,17 +220,17 @@ if __name__ == '__main__':
 
 
 
-    correct_traj = TrajectoryStock()
-    correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
-    traj = correct_traj.to_joint_trajectory()
+    # correct_traj = TrajectoryStock()
+    # correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
+    # traj = correct_traj.to_joint_trajectory()
 
 
     # smooth_traj = TrajectoryStock()
-    # smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
+    # smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=10)
     # traj = smooth_traj.to_joint_trajectory()
 
     # original_traj = TrajectoryStock()
     # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
-    # traj = original_traj.to_joint_trajectory()
+    # traj = original_traj.to_joint_trajectory(withvelacc=False)
 
-    send_trajectory(traj)
+    # send_trajectory(traj)

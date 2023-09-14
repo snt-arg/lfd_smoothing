@@ -165,7 +165,7 @@ class TrajectoryStock:
         plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
         plt.show()
 
-    def to_joint_trajectory(self):
+    def to_joint_trajectory(self, withvelacc=True):
         joint_trajectory = JointTrajectory()
         
         # Assuming you have joint names stored somewhere in the class, 
@@ -176,12 +176,12 @@ class TrajectoryStock:
             point = JointTrajectoryPoint()
             point.positions = self.ys[i]
             
-            # Assuming you want to also set velocities, accelerations, etc. if they are available
-            if len(self.yds) > i:
-                point.velocities = self.yds[i]
-            if len(self.ydds) > i:
-                point.accelerations = self.ydds[i]
-            # if len(self.yddds) > i:
+            if withvelacc:
+                if len(self.yds) > i:
+                    point.velocities = self.yds[i]
+                if len(self.ydds) > i:
+                    point.accelerations = self.ydds[i]
+                # if len(self.yddds) > i:
             #     point.effort = self.yddds[i]  # Assuming effort is the third derivative, adjust if different
             
             point.time_from_start = rospy.Duration.from_sec(self.ts[i])
