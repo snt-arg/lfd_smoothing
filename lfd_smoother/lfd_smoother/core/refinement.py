@@ -40,7 +40,7 @@ class Particle:
         if self.s > 1: 
             self.s = 1
             self.reached = True
-        return self.s
+        return self.s, self.v
     
     def constrain_v(self):
         if self.v < self.v_bounds[0] * self.v0: 
@@ -217,7 +217,7 @@ class AccelerationSystem(object):
         self.t = self.t_start
 
     def cb_raw_command(self, msg: Joy):
-        self.raw_command = msg.axes[5]
+        self.raw_command = msg.axes[4]
 
     def init_dynamic_system(self, tau, y_init, y_attr, alpha):
         self.spring_system = SpringDamperSystem(tau, y_init, y_attr, alpha)
@@ -242,5 +242,5 @@ class AccelerationSystem(object):
         (self.x,self.xd) = self.spring_system.integrate_step(dt,self.x)
         self.t = rospy.Time.now().to_sec()
         t = self.t - self.t_start
-        s=self.particle.position(t,self.x[0])
-        return t,s,self.x[0], self.raw_command
+        s,sd=self.particle.position(t,self.x[0])
+        return t,s,sd,self.x[0], self.raw_command

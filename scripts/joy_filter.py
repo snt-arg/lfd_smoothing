@@ -28,7 +28,7 @@ class KalmanSmoother:
         state_estimate, state_covariance = self.kf.filter_update(
             self.state_estimate,
             self.state_covariance,
-            np.array([msg.axes[5]])
+            np.array([msg.axes[4]])
         )
 
         # Update state estimate and state covariance
