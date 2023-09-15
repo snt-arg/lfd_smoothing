@@ -1038,7 +1038,7 @@ class DMPAnalysis:
         
         colors = ['r', 'r', 'r', 'r', 'r', 'r', 'r']
         
-        fig, axes = plt.subplots(2, 2, figsize=(5, 4))
+        fig, axes = plt.subplots(2, 2, figsize=(7, 4))
         
         for idx, name in enumerate(['vel [rad/s]', 'accl [rad/s${}^2$]']):
             for plot_row, (dmp, ts) in enumerate([(scaled_dmp, ts_scaled), (smooth_dmp, ts_smooth)]):
@@ -1094,7 +1094,7 @@ class DMPAnalysis:
             "Smooth DMP $\dddot{q}$ [rad/s${}^3$]": smooth_dmp.yddds
         }
 
-        fig, ax1 = plt.subplots(1, 1, figsize=(5, 4))
+        fig, ax1 = plt.subplots(1, 1, figsize=(7, 4))
         ax2 =  ax1.twinx()
         color1 = "steelblue"
         color2 = (0.5, 0.0, 0.0)

@@ -156,8 +156,8 @@ def dmp_analysis():
     
     # dmp_an.plot_with_kin_lims(scaled_dmp)
     # dmp_an.plot_with_kin_lims(smooth_dmp)
-    dmp_an.plot_vel_acc_kin_lims(scaled_dmp, smooth_dmp)
-    # dmp_an.plot_compare_jerks(scaled_dmp,smooth_dmp)
+    # dmp_an.plot_vel_acc_kin_lims(scaled_dmp, smooth_dmp)
+    dmp_an.plot_compare_jerks(scaled_dmp,smooth_dmp)
 
 def traj_analysis():
     def max_abs_jerk(traj:TrajectoryStock):
@@ -199,9 +199,9 @@ if __name__ == '__main__':
 
     demo_name = "picknplace0"
 
-    original_traj = TrajectoryStock()
-    original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
-    original_traj.plot() 
+    # original_traj = TrajectoryStock()
+    # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
+    # original_traj.plot() 
 
     # demo_name = "picknplaceee0"
     # tol_an = tolerance_analysis2()
@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
     # tolerance_analysis()
 
-    # dmp_analysis()
+    dmp_analysis()
 
 
     # traj_analysis()
