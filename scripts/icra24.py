@@ -3,226 +3,151 @@
 import os
 import rospy
 import numpy as np
-import matplotlib.pyplot as plt
 
-from std_msgs.msg import Float64, Float64MultiArray
-from sensor_msgs.msg import JointState
-from trajectory_msgs.msg import JointTrajectory
+# from pydrake.all import *
 
-from pydrake.all import *
+from lfd_smoother.plotting.trajectory import TrajectoryStock
+from lfd_smoother.plotting.dmp import DMPAnalysis
+from lfd_smoother.plotting.jerk import JerkAnalysis
+from lfd_smoother.plotting.refinement_phase import ToleranceAnalysis
+from lfd_smoother.plotting.frequency import FrequencyAnalysis
+from lfd_smoother.plotting.torque import TorqueAnalysis
 
-from lfd_smoother.util.icra import TrajectoryStock, TorqueAnalysis, CartesianAnalysis, ToleranceAnalysis, JerkAnalysis, DMPAnalysis
+
+# f = FrequencyAnalysis()
+# f.run(demo_name)
+
+# torque_analysis = TorqueAnalysis()
+# print(torque_analysis.run(original_traj))
+
+# cartesian_analyser = CartesianAnalysis()
+# cartesian_analyser.from_trajectory(smooth_traj)
+# cartesian_analyser.plot()
 
 
-import actionlib
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 
-def send_trajectory(joint_trajectory):
-    # Initialize the action client
-    client = actionlib.SimpleActionClient('/position_joint_trajectory_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+class Plot:
+
+    def __init__(self, demo_name) -> None:
+        self.demo_name  = demo_name
+        self._add_original_traj()
+        self._add_smooth_traj()
+        self._add_refined_traj()
+        self._add_dmps_traj()
+
+    def _add_original_traj(self):
+        try:
+            self.original_traj = TrajectoryStock()
+            self.original_traj.import_from_lfd_storage("filter"+self.demo_name, t_scale=0)
+            self.original_traj.add_cartesian_analysis()
+
+            self.original_traj_n = TrajectoryStock()
+            self.original_traj_n.import_from_lfd_storage("filter"+self.demo_name, t_scale=1)
+            self.original_traj_n.add_cartesian_analysis()
+        except:
+            print("failed to load original trajectory")
+
+    def _add_smooth_traj(self):
+        try:
+            self.smooth_traj = TrajectoryStock()
+            self.smooth_traj.import_from_pydrake("smooth"+self.demo_name, t_scale=0)
+            self.smooth_traj.add_cartesian_analysis()
+
+            self.smooth_traj_n = TrajectoryStock()
+            self.smooth_traj_n.import_from_pydrake("smooth"+self.demo_name, t_scale=1)
+            self.smooth_traj_n.add_cartesian_analysis()
+        except:
+            print("failed to load smooth trajectory")
+
+    def _add_refined_traj(self):
+        try:
+            self.refined_traj = TrajectoryStock()
+            self.refined_traj.import_from_pydrake("correct"+self.demo_name, t_scale=0)
+            self.refined_traj.add_cartesian_analysis()        
+
+            self.refined_traj_n = TrajectoryStock()
+            self.refined_traj_n.import_from_pydrake("correct"+self.demo_name, t_scale=1)
+            self.refined_traj_n.add_cartesian_analysis() 
+        except:
+            print("failed to load refined trajectory")
+
+    def _add_dmps_traj(self):
+        try:
+            self.original_dmp = TrajectoryStock()
+            self.original_dmp.import_from_dmp_joint_trajectory("filter"+self.demo_name, t_scale=0)
+            self.original_dmp.add_cartesian_analysis()
+
+            self.scaled_dmp = TrajectoryStock()
+            self.scaled_dmp.import_from_dmp_joint_trajectory("scaled"+self.demo_name, t_scale=0)
+            self.scaled_dmp.add_cartesian_analysis()
+
+            self.smooth_dmp = TrajectoryStock()
+            self.smooth_dmp.import_from_dmp_joint_trajectory("smooth"+self.demo_name, t_scale=0)
+            self.smooth_dmp.add_cartesian_analysis() 
+        except:
+            print("failed to load dmp trajectory")
+
+    def refinement_phase(self):
+        tol_an = ToleranceAnalysis()
+        tol_an.import_data("smooth" + demo_name)
+        tol_an.plot_traj_with_tols(self.refined_traj)
+        tol_an.plot_x_with_tols(self.refined_traj)
+        tol_an.plot_t_s_command()
+        tol_an.plot_waypoints(self.smooth_traj.ts[-1], self.refined_traj.ts[-1])
+        tol_an.plot_tols_only()
+
+    def jerk_analysis(self):
+        jerk_analysis = JerkAnalysis()
+        jerk_analysis.plot_with_high_jerk(self.original_traj.ts, self.original_traj.ys[:,1], self.original_traj_n.yddds[:,1])
+        jerk_analysis.plot_with_low_jerk(self.smooth_traj.ts, self.smooth_traj.ys[:,1], self.smooth_traj_n.yddds[:,1])
+
+    def tolerance_comparison(self):
+        tol_an = ToleranceAnalysis()
+        tol_an.import_data("smooth" + demo_name)
+        tol_an.plot_low_high_tol(self.smooth_traj, self.refined_traj)
+
+    def dmp_analysis(self):
+        dmp_an = DMPAnalysis()
+        dmp_an.plot_3d(self.original_dmp, self.smooth_dmp)
+        dmp_an.plot_vel_acc_kin_lims(self.scaled_dmp, self.smooth_dmp)
+        dmp_an.plot_compare_jerks(self.scaled_dmp,self.smooth_dmp)
+        # dmp_an.plot_abs_jerk(self.original_dmp, self.smooth_dmp, self.scaled_dmp)
+        # dmp_an.plot_with_kin_lims(self.scaled_dmp)
+        # dmp_an.plot_with_kin_lims(self.smooth_dmp)
     
-    # Wait for the action server to come up
-    rospy.loginfo("Waiting for action server...")
-    client.wait_for_server()
-    rospy.loginfo("Action server detected!")
-
-    # Create and populate the goal message
-    goal = FollowJointTrajectoryGoal()
-    goal.trajectory = joint_trajectory
-
-    # Send the goal
-    client.send_goal(goal)
-    rospy.loginfo("Trajectory sent!")
-
-    # Optionally, wait for the action to complete
-    client.wait_for_result()
-    return client.get_result()
-
-
-
-    # f = FrequencyAnalysis()
-    # f.run(demo_name)
-
-    # torque_analysis = TorqueAnalysis()
-    # print(torque_analysis.run(original_traj))
-
-
-    # cartesian_analyser = CartesianAnalysis()
-    # cartesian_analyser.from_trajectory(smooth_traj)
-    # cartesian_analyser.plot()
-
-
-def tolerance_analysis():
-    smooth_traj = TrajectoryStock()
-    smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
-
-    correct_traj = TrajectoryStock()
-    correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
-
-    smooth_cart = CartesianAnalysis()
-    smooth_cart.from_trajectory(smooth_traj)
-
-    correct_cart = CartesianAnalysis()
-    correct_cart.from_trajectory(correct_traj)
-
-    tol_an = ToleranceAnalysis()
-    tol_an.import_data("smooth" + demo_name)
-    # tol_an.plot_traj_with_tols(correct_traj)
-    # tol_an.plot_x_with_tols(correct_traj)
-    # tol_an.plot_t_s_command()
-    tol_an.plot_waypoints(smooth_traj.ts[-1], correct_traj.ts[-1])
-    return tol_an
-
-def jerk_analysis():
-    original_traj = TrajectoryStock()
-    original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
-
-    original_traj_n = TrajectoryStock()
-    original_traj_n.import_from_lfd_storage("filter"+demo_name, t_scale=1)
-
-    smooth_traj = TrajectoryStock()
-    smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
-
-    smooth_traj_n = TrajectoryStock()
-    smooth_traj_n.import_from_pydrake("smooth"+demo_name, t_scale=1)
-
-    jerk_analysis = JerkAnalysis()
-    jerk_analysis.plot_with_high_jerk(original_traj.ts, original_traj.ys[:,1], original_traj_n.yddds[:,1])
-    jerk_analysis.plot_with_low_jerk(smooth_traj.ts, smooth_traj.ys[:,1], smooth_traj_n.yddds[:,1])
-
-def velocity_adjustment_analysis():
-    smooth_traj = TrajectoryStock()
-    smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
-
-    refined_traj = TrajectoryStock()
-    refined_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
-
-    smooth_cart = CartesianAnalysis()
-    smooth_cart.from_trajectory(smooth_traj)
-
-    refined_cart = CartesianAnalysis()
-    refined_cart.from_trajectory(refined_traj)
-
-    # smooth_cart.plot_3d()
-    # refined_cart.plot_3d()
-
-    smooth_traj.plot()
-    refined_traj.plot()  
-
-def tolerance_analysis2():
-    smooth_traj = TrajectoryStock()
-    smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
-
-    correct_traj = TrajectoryStock()
-    correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
-
-    smooth_cart = CartesianAnalysis()
-    smooth_cart.from_trajectory(smooth_traj)
-
-    correct_cart = CartesianAnalysis()
-    correct_cart.from_trajectory(correct_traj)
-
-    tol_an = ToleranceAnalysis()
-    tol_an.import_data("smooth" + demo_name)
-    tol_an.plot_normalized(smooth_traj, correct_traj)
-    return tol_an
-
-def dmp_analysis():
-    original_dmp = TrajectoryStock()
-    original_dmp.import_from_dmp_joint_trajectory("filter"+demo_name, t_scale=1)
-    original_cart = CartesianAnalysis()
-    original_cart.from_trajectory(original_dmp)
-
-    scaled_dmp = TrajectoryStock()
-    scaled_dmp.import_from_dmp_joint_trajectory("scaled"+demo_name, t_scale=0)
-    scaled_cart = CartesianAnalysis()
-    scaled_cart.from_trajectory(scaled_dmp)
-
-    smooth_dmp = TrajectoryStock()
-    smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=0)
-    smooth_cart = CartesianAnalysis()
-    smooth_cart.from_trajectory(smooth_dmp)
-
-    traj = TrajectoryStock()
-    traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
-    traj_cart = CartesianAnalysis()
-    traj_cart.from_trajectory(traj)
-
-    dmp_an = DMPAnalysis()
-    # dmp_an.plot_3d(original_dmp, smooth_dmp)
-    # dmp_an.plot_abs_jerk(original_dmp, smooth_dmp)
-    # dmp_an.plot_abs_jerk(original_dmp, smooth_dmp, scaled_dmp)
-    
-    # dmp_an.plot_with_kin_lims(scaled_dmp)
-    # dmp_an.plot_with_kin_lims(smooth_dmp)
-    # dmp_an.plot_vel_acc_kin_lims(scaled_dmp, smooth_dmp)
-    dmp_an.plot_compare_jerks(scaled_dmp,smooth_dmp)
-
-def traj_analysis():
-    def max_abs_jerk(traj:TrajectoryStock):
+    def max_abs_jerk(self, traj : TrajectoryStock):
         return np.max(np.abs(traj.yddds))
-    
-    def duration(traj:TrajectoryStock):
+
+    def duration(self, traj:TrajectoryStock):
         return traj.ts[-1]
     
-    original_dmp = TrajectoryStock()
-    original_dmp.import_from_dmp_joint_trajectory("filter"+demo_name, t_scale=1)
-    print(max_abs_jerk(original_dmp))
-
-
-    scaled_dmp = TrajectoryStock()
-    scaled_dmp.import_from_dmp_joint_trajectory("scaled"+demo_name, t_scale=1)
-    print(max_abs_jerk(scaled_dmp))
-
-    smooth_dmp = TrajectoryStock()
-    smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=1)
-    print(max_abs_jerk(smooth_dmp))
-
-    # smooth_dmp = TrajectoryStock()
-    # smooth_dmp.import_from_dmp_joint_trajectory("smooth"+demo_name, t_scale=0)
-
-    # original_traj = TrajectoryStock()
-    # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)
-    # print(max_abs_jerk(original_traj))
-    # print(duration(original_traj))
-
-    # smooth_traj = TrajectoryStock()
-    # smooth_traj.import_from_pydrake("smooth"+demo_name, t_scale=0)
-    # print(max_abs_jerk(smooth_traj))
-    # print(duration(smooth_traj))
 
 if __name__ == '__main__':
 
     rospy.init_node('icra24')
     os.chdir(rospy.get_param("~working_dir"))
+    demo_name = rospy.get_param("~demo_name")
+    plot_arg = rospy.get_param("~plot_arg")
 
-    demo_name = "picknplace0"
-
-    # original_traj = TrajectoryStock()
-    # original_traj.import_from_lfd_storage("filter"+demo_name, t_scale=0)   
-    # original_traj.plot() 
-
-    # demo_name = "picknplaceee0"
-    # tol_an = tolerance_analysis2()
-
-    # velocity_adjustment_analysis()
-
-    # tolerance_analysis()
-
-    dmp_analysis()
+    plot = Plot(demo_name)
 
 
-    # traj_analysis()
-
-
-    # rospy.spin()
+    if plot_arg == "dmp":
+        plot.dmp_analysis()
+    elif plot_arg == "refinement":
+        plot.refinement_phase()
+    elif plot_arg == "jerk":
+        plot.jerk_analysis()
+    elif plot_arg == "tolerance":
+        plot.tolerance_comparison()
 
 
 
-    # correct_traj = TrajectoryStock()
-    # correct_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
-    # traj = correct_traj.to_joint_trajectory()
+
+
+    # refined_traj = TrajectoryStock()
+    # refined_traj.import_from_pydrake("correct"+demo_name, t_scale=0)
+    # traj = refined_traj.to_joint_trajectory()
 
 
     # smooth_traj = TrajectoryStock()
