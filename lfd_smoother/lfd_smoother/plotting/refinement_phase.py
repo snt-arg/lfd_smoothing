@@ -2,9 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
-import pickle
 
-from lfd_smoother.util.demonstration import Demonstration
+from lfd_storage.smoother_storage import SmootherStorage
 
 import matplotlib.collections as mcoll
 from matplotlib.colors import LinearSegmentedColormap
@@ -19,17 +18,13 @@ class ToleranceAnalysis:
         pass
 
     def import_data(self, demo_name):
-        with open("timing/{}.pickle".format(demo_name), 'rb') as file:
-            self.ts_original = pickle.load(file)
-        with open("timing_new/{}.pickle".format(demo_name), 'rb') as file:
-            self.ss_new = pickle.load(file)
-        with open("metadata/{}.pickle".format(demo_name), 'rb') as file:
-            self.metadata = pickle.load(file)    
-        with open("tolerances/{}.pickle".format(demo_name), 'rb') as file:
-            self.tolerances = pickle.load(file) 
+        self.storage = SmootherStorage(demo_name)
+        self.ts_original = self.storage.import_timing()
+        self.ss_new = self.storage.import_new_timing()
+        self.metadata = self.storage.import_metadata()
+        self.tolerances = self.storage.import_tolerances()
         
-        self.demo = Demonstration()
-        self.demo.read_from_json("waypoints/{}.json".format(demo_name))
+        self.demo = self.storage.import_waypoints_as_demo()
         
         self.ts = self.metadata["ts"]
         self.ss = self.metadata["ss"]

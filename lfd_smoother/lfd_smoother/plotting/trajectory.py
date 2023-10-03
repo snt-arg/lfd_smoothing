@@ -3,13 +3,13 @@ import rospy
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
-import pickle
 
-from lfd_interface.srv import GetDemonstration
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from pydrake.all import *
 from lfd_smoother.util.fr3_drake import FR3Drake
+
+from lfd_storage.smoother_storage import SmootherStorage
 
 
 plt.rcParams['pdf.fonttype'] = 42
@@ -23,22 +23,20 @@ class TrajectoryStock:
         self.velocities = None # To be filled later by Cartesian Analysis
 
     def import_from_lfd_storage(self,name, t_scale=0):
-        rospy.wait_for_service("get_demonstration")
-        sc_lfd_storage = rospy.ServiceProxy("get_demonstration", GetDemonstration)
-        resp = sc_lfd_storage(name=name)
-        joint_trajectory = resp.Demonstration.joint_trajectory
+        self.storage = SmootherStorage(name)
+        joint_trajectory = self.storage.import_original_traj()
         self._from_joint_trajectory(joint_trajectory, t_scale)
         self.normalize_t()
 
     def import_from_pydrake(self,name, t_scale=0):
-        with open("traj/{}.pickle".format(name), 'rb') as file:
-            traj = pickle.load(file)
+        self.storage = SmootherStorage(name)
+        traj = self.storage.import_pydrake_traj()
         self._from_pydrake(traj,t_scale)
         self.normalize_t()
 
     def import_from_dmp_joint_trajectory(self, name, t_scale=0):
-        with open("dmp/{}.pickle".format(name), 'rb') as file:
-            joint_trajectory = pickle.load(file) 
+        self.storage = SmootherStorage(name)
+        joint_trajectory = self.storage.import_dmp_traj()
         self._from_joint_trajectory(joint_trajectory, t_scale)
         self.normalize_t()
 

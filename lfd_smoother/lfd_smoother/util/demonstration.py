@@ -5,6 +5,8 @@ import rospy
 from lfd_interface.msg import PoseTrajectoryPoint
 from trajectory_msgs.msg import JointTrajectoryPoint
 
+from lfd_storage.smoother_storage import SmootherStorage
+
 from pydrake.all import *
 
 class Demonstration:
@@ -108,19 +110,20 @@ class Demonstration:
     
     
     
-    def export_as_json(self, filename):
+    def export_waypoints(self, demo_name):
+        storage = SmootherStorage(demo_name)
         obj = {"ts" : self.ts.tolist(),
                "ys" : self.ys.tolist(),
                "positions" : self.positions.tolist(),
                "orientations" : self.orientations.tolist()
                }
-        with open(filename, 'w') as file:
-            file.write(json.dumps(obj))
+        storage.export_waypoints(obj)
      
             
-    def read_from_json(self, filename):
-        with open(filename, "r") as file:
-            obj = json.loads(file.read())
+    def read_from_waypoints(self, demo_name):
+        storage = SmootherStorage(demo_name)
+
+        obj = storage.import_waypoints()
         
         self.read_raw(np.array(obj["ts"]),
                       np.array(obj["ys"]),

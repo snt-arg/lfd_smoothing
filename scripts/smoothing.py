@@ -13,7 +13,7 @@ smoother_config= {
 
 smoother = TrajectorySmoother(smoother_config)
 
-
+# this line won't work anymore
 smoother.read_demo_json('demo_samples/json/00.json')
 smoother.run()
 

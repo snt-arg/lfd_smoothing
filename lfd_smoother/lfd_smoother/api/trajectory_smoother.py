@@ -20,9 +20,9 @@ class TrajectorySmoother:
         self.demo.read_from_ros(demonstration)
         self.demo.filter(thr_translation=self.config["demo_filter_threshold"])
 
-    def read_demo_json(self, filename):
+    def read_demo_waypoints(self, demo_name):
         self.demo = Demonstration()
-        self.demo.read_from_json(filename=filename)
+        self.demo.read_from_waypoints(demo_name)
         self.demo.filter(thr_translation=self.config["demo_filter_threshold"])
 
     def run(self, timings = None, tolerances = None):

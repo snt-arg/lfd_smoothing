@@ -10,6 +10,8 @@ from lfd_interface.srv import GetDemonstration, DemoCount
 
 from lfd_smoother.api.trajectory_smoother import TrajectorySmoother
 
+from lfd_storage.smoother_storage import SmootherStorage
+
 
 def export_demonstration(template : DemonstrationMsg, ts, ys, yds, ydds, is_correction=False):
     template.joint_trajectory.points.clear()
@@ -30,17 +32,20 @@ def export_demonstration(template : DemonstrationMsg, ts, ys, yds, ydds, is_corr
 
 def import_correction_data(demo_name):
     demo_name = "smooth" + demo_name
+    storage = SmootherStorage(demo_name)
     try:
-        with open("timing_new/" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
-            timings = pickle.load(f)
+        timings = storage.import_new_timing()
+        # with open("timing_new/" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
+        #     timings = pickle.load(f)
         print("File opened and data loaded successfully.")
     except FileNotFoundError:
         print("File does not exist.")
         timings = None
     
     try:
-        with open("tolerances/" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
-            tolerances = pickle.load(f)
+        tolerances = storage.import_tolerances()
+        # with open("tolerances/" + demo_name +"{}".format(i) + ".pickle", 'rb') as f:
+        #     tolerances = pickle.load(f)
         print("File opened and data loaded successfully.")
     except FileNotFoundError:
         print("File does not exist.")
@@ -54,7 +59,7 @@ if __name__ == '__main__':
 
     rospy.init_node('trajectory_smoother_node')
     
-    os.chdir(rospy.get_param("~working_dir"))
+    # os.chdir(rospy.get_param("~working_dir"))
     
     correction = rospy.get_param("~correction")
 
@@ -77,7 +82,7 @@ if __name__ == '__main__':
         demonstration = resp.Demonstration
         smoother.read_demo_ros(demonstration)
         if correction:
-            timings,tolerances = import_correction_data(demo_name)
+            timings,tolerances = import_correction_data(demo_name +"{}".format(i))
         else:
             timings = None
             tolerances = None
@@ -87,11 +92,14 @@ if __name__ == '__main__':
         pub_save_demo.publish(demo_smooth)
         traj = smoother.smoother.trajopts[0].ReconstructTrajectory(smoother.smoother.result)
         timings = smoother.timings
-        with open("traj/{}.pickle".format(demo_smooth.name), 'wb') as file:
-            pickle.dump(traj,file)
-        with open("timing/{}.pickle".format(demo_smooth.name), 'wb') as file:
-            pickle.dump(timings,file)
-        smoother.demo.export_as_json("waypoints/{}.json".format(demo_smooth.name))
+        storage = SmootherStorage(demo_smooth.name)
+        storage.export_pydrake_traj(traj)
+        # with open("traj/{}.pickle".format(demo_smooth.name), 'wb') as file:
+        #     pickle.dump(traj,file)
+        storage.export_timing(timings)
+        # with open("timing/{}.pickle".format(demo_smooth.name), 'wb') as file:
+        #     pickle.dump(timings,file)
+        smoother.demo.export_waypoints(demo_smooth.name)
     
     # rospy.spin()
 
