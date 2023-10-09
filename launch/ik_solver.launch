@@ -1,0 +1,7 @@
+<launch>
+
+    <node name="ik_solver" pkg="lfd_smoothing" type="ik_solver_ros.py" output="screen">
+        <rosparam command="load" file="$(find lfd_smoothing)/config/ros.yaml" subst_value="true" />
+    </node>
+
+</launch>
