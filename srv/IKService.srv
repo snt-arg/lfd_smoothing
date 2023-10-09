@@ -1,0 +1,4 @@
+geometry_msgs/Pose end_effector_pose
+trajectory_msgs/JointTrajectoryPoint q_init
+---
+trajectory_msgs/JointTrajectoryPoint q_out
