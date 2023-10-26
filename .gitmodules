@@ -2,3 +2,7 @@
 	path = drake/franka_drake
 	url = https://github.com/snt-arg/franka_drake.git
 	branch = main
+[submodule "drake/yumi_drake"]
+	path = drake/yumi_drake
+	url = https://github.com/snt-arg/yumi_drake.git
+	branch = main
