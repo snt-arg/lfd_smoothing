@@ -5,8 +5,8 @@ from pydrake.all import *
 from lfd_smoother.core.trajectory_optimizer import TrajectoryOptimizer
 from lfd_smoother.core.single_optimizer import SingleOptimizer
 from lfd_smoother.util.demonstration import Demonstration
-from lfd_smoother.util.fr3_drake import FR3Drake
-from lfd_smoother.util.config import FR3Config
+from lfd_smoother.util.robot import FR3Drake, YumiDrake
+from lfd_smoother.util.config import FR3Config, YumiConfig
 
 
 
@@ -27,10 +27,16 @@ class TrajectorySmoother:
 
     def run(self, timings = None, tolerances = None):
 
-        self.robot = FR3Drake(franka_pkg_xml=self.config["franka_pkg_xml"],
-                        urdf_path=self.config["urdf_path"])
+        if self.config["robot_type"] == "fr3":
+            self.robot = FR3Drake(pkg_xml=self.config["pkg_xml"],
+                            urdf_path=self.config["urdf_path"])
+            config = FR3Config(self.robot, self.demo)
+        elif self.config["robot_type"] == "yumi":
+            self.robot = YumiDrake(pkg_xml=self.config["pkg_xml"],
+                            urdf_path=self.config["urdf_path"])
 
-        config = FR3Config(self.robot, self.demo)
+            config = YumiConfig(self.robot, self.demo)
+
         config.parse_from_file(self.config["config_hierarchy"][0])
         self.smoother = TrajectoryOptimizer(self.robot, config)
         self.smoother.run()

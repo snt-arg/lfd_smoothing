@@ -3,17 +3,22 @@ import numpy as np
 
 from pydrake.all import *
 
-from lfd_smoother.util.fr3_drake import FR3Drake
+from lfd_smoother.util.robot import FR3Drake, YumiDrake
 
 
 class IKSolver:
 
     def __init__(self, config):
         self.config = config
-        self.robot = FR3Drake(franka_pkg_xml=self.config["franka_pkg_xml"],
-                        urdf_path=self.config["urdf_path"],
-                        gripper_frame=self.config["ee_frame"])
-
+        if config["robot_type"] == "fr3":
+            self.robot = FR3Drake(pkg_xml=self.config["pkg_xml"],
+                            urdf_path=self.config["urdf_path"],
+                            gripper_frame=self.config.get("ee_frame",None))
+        elif config["robot_type"] == "yumi":
+            self.robot = YumiDrake(pkg_xml=self.config["pkg_xml"],
+                            urdf_path=self.config["urdf_path"],
+                            gripper_frame=self.config.get("ee_frame",None))
+            
         # pose = self.robot.create_waypoint("pose", [0.303, 0, 0.482])
         # pose.set_rotation(Quaternion([0,-1,0,0]))
 
@@ -53,10 +58,7 @@ class IKSolver:
 
 
     def visualize(self,q):
-        plant_context = self.robot.plant.GetMyContextFromRoot(self.robot.context)
-        visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
-        self.robot.plant.SetPositions(plant_context, q)
-        self.robot.visualizer.ForcedPublish(visualizer_context)
+        self.robot.visualize(q)
 
 
 

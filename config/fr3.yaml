@@ -1,0 +1,16 @@
+smoother_config: {
+demo_filter_threshold: 0.01,
+pkg_xml: $(find lfd_smoothing)/drake/franka_drake/package.xml,
+urdf_path: package://franka_drake/urdf/fr3_nohand.urdf,
+config_hierarchy: ["$(find lfd_smoothing)/config/opt/initial.yaml", "$(find lfd_smoothing)/config/opt/main.yaml"],
+robot_type: "fr3"
+}
+
+ik_solver_config: {
+pkg_xml: $(find lfd_smoothing)/drake/franka_drake/package.xml,
+urdf_path: package://franka_drake/urdf/fr3_full.urdf,
+ee_frame: fr3_hand_tcp,
+robot_type: "fr3"
+}
+
+

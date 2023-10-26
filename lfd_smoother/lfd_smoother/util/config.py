@@ -1,25 +1,20 @@
 import numpy as np
 import yaml
 
-class FR3Config:
+class RobotConfig:
 
-    def __init__(self, robot, demo):
+    def __init__(self, robot, demo) -> None:
         self.ref_vel_bound = np.array([robot.plant.GetVelocityLowerLimits(),
                     robot.plant.GetVelocityUpperLimits()
                     ])
-        self.ref_acc_bound = np.array([[-10.0 for _ in range(robot.plant.num_positions())],
-                            [10.0 for _ in range(robot.plant.num_positions())]
-                            ])
-        self.ref_jerk_bound = np.array([[-500.0 for _ in range(robot.plant.num_positions())],
-                    [500.0 for _ in range(robot.plant.num_positions())]
-                            ])
-        self.demo = demo
 
+        self.demo = demo
+    
     def parse_from_file(self,filename):
         with open(filename, "r") as file:
             yaml_data = yaml.safe_load(file)
         
-        self.parse(yaml_data)
+        self.parse(yaml_data)    
 
     def parse(self,config : dict):
         self.num_control_points = config.get("num_cps",self.demo.length)
@@ -63,3 +58,28 @@ class FR3Config:
 
     def add_solver(self, solver):
         self.solver = solver
+
+
+class FR3Config(RobotConfig):
+
+    def __init__(self, robot, demo) -> None:
+        super().__init__(robot, demo)
+
+        self.ref_acc_bound = np.array([[-10.0 for _ in range(robot.plant.num_positions())],
+                            [10.0 for _ in range(robot.plant.num_positions())]
+                            ])
+        self.ref_jerk_bound = np.array([[-500.0 for _ in range(robot.plant.num_positions())],
+                    [500.0 for _ in range(robot.plant.num_positions())]
+                            ])
+
+class YumiConfig(RobotConfig):
+
+    def __init__(self, robot, demo) -> None:
+        super().__init__(robot, demo)
+
+        self.ref_acc_bound = np.array([[-10.0 for _ in range(robot.plant.num_positions())],
+                            [10.0 for _ in range(robot.plant.num_positions())]
+                            ])
+        self.ref_jerk_bound = np.array([[-500.0 for _ in range(robot.plant.num_positions())],
+                    [500.0 for _ in range(robot.plant.num_positions())]
+                            ])        
