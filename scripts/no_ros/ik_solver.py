@@ -10,29 +10,24 @@ import numpy as np
 
 from pydrake.all import *
 
-from lfd_smoother.core.trajectory_optimizer import TrajectoryOptimizer
-from lfd_smoother.core.single_optimizer import SingleOptimizer
-from lfd_smoother.util.demonstration import Demonstration
-from lfd_smoother.util.fr3_drake import FR3Drake
-from lfd_smoother.util.config import FR3Config
+from lfd_smoother.util.robot import YumiDrake
+
 
 #%%
 
 config= {
 "demo_filter_threshold": 0.01,
-"franka_pkg_xml": "drake/franka_drake/package.xml",
-"urdf_path": "package://franka_drake/urdf/fr3_full.urdf",
-"config_hierarchy": ["config/opt/initial.yaml", "config/opt/main.yaml"]
+"pkg_xml": "drake/yumi_drake/package.xml",
+"urdf_path": "package://yumi_drake/urdf/yumi_right.urdf",
 }
 
-robot = FR3Drake(franka_pkg_xml=config["franka_pkg_xml"],
-                        urdf_path=config["urdf_path"],
-                        gripper_frame="fr3_hand_tcp")
+robot = YumiDrake(pkg_xml=config["pkg_xml"],
+                        urdf_path=config["urdf_path"], left_arm=False)
 
 pose = robot.create_waypoint("pose", [0.303, 0, 0.482])
 pose.set_rotation(Quaternion([0,-1,0,0]))
 q0 = np.zeros(robot.plant.num_positions())
-q0 = [0.00112954, -0.787257, -0.000108279, -2.36501, 0.00214555, 1.55991, 0.766295,1,1]
+# q0 = [0.00112954, -0.787257, -0.000108279, -2.36501, 0.00214555, 1.55991, 0.766295,1,1]
 
 #%%
 
@@ -54,7 +49,6 @@ prog.AddCost((ik_solver.q()-q0).dot(ik_solver.q()-q0))
 result = Solve(prog)
 q = result.GetSolution(ik_solver.q())
 
-plant_context = robot.plant.GetMyContextFromRoot(robot.context)
-visualizer_context = robot.visualizer.GetMyContextFromRoot(robot.context)
-robot.plant.SetPositions(plant_context, q)
-robot.visualizer.ForcedPublish(visualizer_context)
+#%%
+
+robot.visualize(q)
