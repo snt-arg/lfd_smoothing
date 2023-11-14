@@ -1,0 +1,14 @@
+smoother_config: {
+demo_filter_threshold: 0.01,
+pkg_xml: $(find lfd_smoothing)/drake/yumi_drake/package.xml,
+urdf_path: package://yumi_drake/urdf/yumi_left.urdf,
+config_hierarchy: ["$(find lfd_smoothing)/config/opt/initial.yaml", "$(find lfd_smoothing)/config/opt/main.yaml"],
+robot_type: "yumi_l"
+}
+
+ik_solver_config: {
+pkg_xml: $(find lfd_smoothing)/drake/yumi_drake/package.xml,
+urdf_path: package://yumi_drake/urdf/yumi_left.urdf,
+ee_frame: yumi_link_7_l,
+robot_type: "yumi_l"
+}

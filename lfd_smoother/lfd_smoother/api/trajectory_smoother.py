@@ -31,11 +31,17 @@ class TrajectorySmoother:
             self.robot = FR3Drake(pkg_xml=self.config["pkg_xml"],
                             urdf_path=self.config["urdf_path"])
             config = FR3Config(self.robot, self.demo)
-        elif self.config["robot_type"] == "yumi":
+        elif self.config["robot_type"] == "yumi_l":
             self.robot = YumiDrake(pkg_xml=self.config["pkg_xml"],
                             urdf_path=self.config["urdf_path"])
 
             config = YumiConfig(self.robot, self.demo)
+        elif self.config["robot_type"] == "yumi_r":
+            self.robot = YumiDrake(pkg_xml=self.config["pkg_xml"],
+                            urdf_path=self.config["urdf_path"],
+                            left_arm=False)
+
+            config = YumiConfig(self.robot, self.demo)            
 
         config.parse_from_file(self.config["config_hierarchy"][0])
         self.smoother = TrajectoryOptimizer(self.robot, config)
