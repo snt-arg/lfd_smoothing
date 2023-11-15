@@ -14,10 +14,16 @@ class IKSolver:
             self.robot = FR3Drake(pkg_xml=self.config["pkg_xml"],
                             urdf_path=self.config["urdf_path"],
                             gripper_frame=self.config.get("ee_frame",None))
-        elif config["robot_type"] == "yumi":
+        elif config["robot_type"] == "yumi_l":
             self.robot = YumiDrake(pkg_xml=self.config["pkg_xml"],
                             urdf_path=self.config["urdf_path"],
-                            gripper_frame=self.config.get("ee_frame",None))
+                            gripper_frame=self.config.get("ee_frame",None),
+                            left_arm=True)
+        elif config["robot_type"] == "yumi_r":
+            self.robot = YumiDrake(pkg_xml=self.config["pkg_xml"],
+                            urdf_path=self.config["urdf_path"],
+                            gripper_frame=self.config.get("ee_frame",None),
+                            left_arm=False)
             
         # pose = self.robot.create_waypoint("pose", [0.303, 0, 0.482])
         # pose.set_rotation(Quaternion([0,-1,0,0]))
