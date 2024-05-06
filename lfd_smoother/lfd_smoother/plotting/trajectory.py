@@ -7,7 +7,7 @@ from scipy import interpolate
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from pydrake.all import *
-from lfd_smoother.util.fr3_drake import FR3Drake
+from lfd_smoother.util.robot import FR3Drake
 
 from lfd_storage.smoother_storage import SmootherStorage
 
@@ -179,7 +179,7 @@ class TrajectoryStock:
 class CartesianAnalysis:
 
     def __init__(self) -> None:
-        self.robot = FR3Drake(franka_pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/franka_drake/package.xml",
+        self.robot = FR3Drake(pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/franka_drake/package.xml",
                 urdf_path="package://franka_drake/urdf/fr3_nohand.urdf")
         self.visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
         self.ee_body = self.robot.plant.GetBodyByName("fr3_link8")
