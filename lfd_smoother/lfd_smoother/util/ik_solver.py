@@ -56,8 +56,10 @@ class IKSolver:
         self.prog = self.ik_solver.get_mutable_prog()
         self.prog.AddCost((self.ik_solver.q()-q0).dot(self.ik_solver.q()-q0))
 
+        solver = IpoptSolver()
 
-        result = Solve(self.prog)
+        # result = Solve(self.prog)
+        result = solver.Solve(self.prog)
         q = result.GetSolution(self.ik_solver.q())
         self.visualize(q)
         return q[:num_q]
