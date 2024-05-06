@@ -179,10 +179,11 @@ class DMPAnalysis:
                 if label.startswith('Scaled'):
                     ax1.plot(ts_scaled, values[:, dof], color=color1, linestyle="-", linewidth=2, alpha=0.7)
                     ax1.tick_params(axis='y', labelcolor=color1)
+                    ax1.set_ylim(-1000, 1000)
                 else: # Smooth
                     ax2.plot(ts_smooth, values[:, dof], color=color2, linewidth=2,  alpha=0.6)
                     ax2.tick_params(axis='y', labelcolor=color2)
-                    ax2.set_ylim(-450, 450)
+                    ax2.set_ylim(-250, 250)
 
         y_max_scaled = np.max(scaled_dmp.yddds)
         y_min_scaled = np.min(scaled_dmp.yddds)

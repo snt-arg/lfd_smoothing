@@ -77,13 +77,26 @@ class Plot:
             self.original_dmp.import_from_dmp_joint_trajectory("filter"+self.demo_name, t_scale=0)
             self.original_dmp.add_cartesian_analysis()
 
-            self.scaled_dmp = TrajectoryStock()
-            self.scaled_dmp.import_from_dmp_joint_trajectory("scaled"+self.demo_name, t_scale=0)
-            self.scaled_dmp.add_cartesian_analysis()
+            # self.scaled_dmp = TrajectoryStock()
+            # self.scaled_dmp.import_from_dmp_joint_trajectory("scaled"+self.demo_name, t_scale=0)
+            # self.scaled_dmp.add_cartesian_analysis()
 
             self.smooth_dmp = TrajectoryStock()
             self.smooth_dmp.import_from_dmp_joint_trajectory("smooth"+self.demo_name, t_scale=0)
             self.smooth_dmp.add_cartesian_analysis() 
+
+            self.original_dmp_n = TrajectoryStock()
+            self.original_dmp_n.import_from_dmp_joint_trajectory("filter"+self.demo_name, t_scale=1)
+            self.original_dmp_n.add_cartesian_analysis()
+
+            # self.scaled_dmp_n = TrajectoryStock()
+            # self.scaled_dmp_n.import_from_dmp_joint_trajectory("scaled"+self.demo_name, t_scale=1)
+            # self.scaled_dmp_n.add_cartesian_analysis()
+
+            self.smooth_dmp_n = TrajectoryStock()
+            self.smooth_dmp_n.import_from_dmp_joint_trajectory("smooth"+self.demo_name, t_scale=1)
+            self.smooth_dmp_n.add_cartesian_analysis() 
+
         except:
             print("failed to load dmp trajectory")
 
@@ -131,15 +144,35 @@ if __name__ == '__main__':
 
     plot = Plot(demo_name)
 
+    # print("original_traj MANJ", plot.max_abs_jerk(plot.original_traj_n))
+    # print("smooth_traj MANJ", plot.max_abs_jerk(plot.smooth_traj_n))
+    print("original_traj duration", plot.duration(plot.original_traj))
+    print("smooth_traj duration", plot.duration(plot.smooth_traj))
 
-    if plot_arg == "dmp":
-        plot.dmp_analysis()
-    elif plot_arg == "refinement":
-        plot.refinement_phase()
-    elif plot_arg == "jerk":
-        plot.jerk_analysis()
-    elif plot_arg == "tolerance":
-        plot.tolerance_comparison()
+    print("original_traj MANJ", plot.max_abs_jerk(plot.original_traj_n))
+    print("smooth_traj MANJ", plot.max_abs_jerk(plot.smooth_traj_n))
+    print("original_dmp MANJ", plot.max_abs_jerk(plot.original_dmp_n))
+    # print("scaled_dmp MANJ", plot.max_abs_jerk(plot.scaled_dmp_n))
+    print("smooth_dmp MANJ", plot.max_abs_jerk(plot.smooth_dmp_n))
+    print(plot.max_abs_jerk(plot.original_traj_n), plot.max_abs_jerk(plot.smooth_traj_n)
+          , plot.max_abs_jerk(plot.original_dmp_n), plot.max_abs_jerk(plot.smooth_dmp_n))
+    
+    
+    # print("original_dmp duration", plot.duration(plot.original_dmp))
+    # print("smooth_dmp duration", plot.duration(plot.smooth_dmp))
+
+
+
+
+
+    # if plot_arg == "dmp":
+    #     plot.dmp_analysis()
+    # elif plot_arg == "refinement":
+    #     plot.refinement_phase()
+    # elif plot_arg == "jerk":
+    #     plot.jerk_analysis()
+    # elif plot_arg == "tolerance":
+    #     plot.tolerance_comparison()
 
 
 

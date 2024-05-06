@@ -1,7 +1,7 @@
 <launch>
 
     <!-- <arg name="demo_name" default="picknplace"/> -->
-    <arg name="working_dir" value="$(find lfd_smoothing)/data" />
+    <arg name="working_dir" value="$(find lfd_interface)/data" />
     <arg name="demo_name" default="picknplace0"/> 
     <arg name="plot_arg" default="dmp"/> 
 
