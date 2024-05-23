@@ -39,6 +39,8 @@ class IKServer:
                     end_effector_pose.position.y, end_effector_pose.position.z]
         orientation = [end_effector_pose.orientation.w, end_effector_pose.orientation.x,
                         end_effector_pose.orientation.y, end_effector_pose.orientation.z]
+        # Normalize the orientation quaternion
+        orientation /= np.linalg.norm(orientation)
         q_init = q_init.positions
 
         q_values = self.solve(position, orientation, q_init)
