@@ -54,11 +54,18 @@ class IKSolver:
                                                 self.robot.plant.world_frame(), pose.rotation(), 0)
         
         self.prog = self.ik_solver.get_mutable_prog()
-        self.prog.AddCost(((self.ik_solver.q()-q0).dot(self.ik_solver.q()-q0)) * 1e-2)
+
+        delta_q = self.ik_solver.q() - q0
+        for q in delta_q:
+            self.prog.AddCost(pow(q,2))
+
+
+        # self.prog.AddCost(sum(abs(self.ik_solver.q()-q0)) * 100)
+        # self.prog.AddCost(((self.ik_solver.q()-q0).dot(self.ik_solver.q()-q0)) * 1e-2)
         self.prog.SetInitialGuess(self.ik_solver.q(), q0)
 
 
-        solver = IpoptSolver()
+        solver = SnoptSolver()
 
         # result = Solve(self.prog)
         result = solver.Solve(self.prog)
