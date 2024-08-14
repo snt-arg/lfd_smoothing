@@ -45,7 +45,7 @@ class TrajectorySmoother:
 
         config.parse_from_file(self.config["config_hierarchy"][0])
         self.smoother = TrajectoryOptimizer(self.robot, config)
-        self.smoother.run()
+        self.smoother.run(tag="opt1")
         initial_guess = self.smoother.export_cps()
         if timings is None:
             self.timings = self.smoother.export_waypoint_ts()
@@ -55,7 +55,7 @@ class TrajectorySmoother:
         config.parse_from_file(self.config["config_hierarchy"][1])
         config.add_initial_guess(initial_guess,self.timings)
         self.smoother = SingleOptimizer(self.robot, config, tolerances=tolerances)
-        self.result_traj = self.smoother.run()
+        self.result_traj = self.smoother.run(tag="opt2")
         
     def export_raw(self):
         ts = np.linspace(0, self.result_traj.end_time(), 1000)

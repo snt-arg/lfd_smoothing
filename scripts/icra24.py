@@ -28,8 +28,9 @@ from lfd_smoother.plotting.torque import TorqueAnalysis
 
 class Plot:
 
-    def __init__(self, demo_name) -> None:
+    def __init__(self, demo_name, robot_type="fr3") -> None:
         self.demo_name  = demo_name
+        self.robot_type = robot_type
         self._add_original_traj()
         self._add_smooth_traj()
         self._add_refined_traj()
@@ -39,11 +40,11 @@ class Plot:
         try:
             self.original_traj = TrajectoryStock()
             self.original_traj.import_from_lfd_storage("filter"+self.demo_name, t_scale=0)
-            self.original_traj.add_cartesian_analysis()
+            self.original_traj.add_cartesian_analysis(robot_type=self.robot_type)
 
             self.original_traj_n = TrajectoryStock()
             self.original_traj_n.import_from_lfd_storage("filter"+self.demo_name, t_scale=1)
-            self.original_traj_n.add_cartesian_analysis()
+            self.original_traj_n.add_cartesian_analysis(robot_type=self.robot_type)
         except:
             print("failed to load original trajectory")
 
@@ -51,11 +52,11 @@ class Plot:
         try:
             self.smooth_traj = TrajectoryStock()
             self.smooth_traj.import_from_pydrake("smooth"+self.demo_name, t_scale=0)
-            self.smooth_traj.add_cartesian_analysis()
+            self.smooth_traj.add_cartesian_analysis(robot_type=self.robot_type)
 
             self.smooth_traj_n = TrajectoryStock()
             self.smooth_traj_n.import_from_pydrake("smooth"+self.demo_name, t_scale=1)
-            self.smooth_traj_n.add_cartesian_analysis()
+            self.smooth_traj_n.add_cartesian_analysis(robot_type=self.robot_type)
         except:
             print("failed to load smooth trajectory")
 
@@ -63,11 +64,11 @@ class Plot:
         try:
             self.refined_traj = TrajectoryStock()
             self.refined_traj.import_from_pydrake("correct"+self.demo_name, t_scale=0)
-            self.refined_traj.add_cartesian_analysis()        
+            self.refined_traj.add_cartesian_analysis(robot_type=self.robot_type)        
 
             self.refined_traj_n = TrajectoryStock()
             self.refined_traj_n.import_from_pydrake("correct"+self.demo_name, t_scale=1)
-            self.refined_traj_n.add_cartesian_analysis() 
+            self.refined_traj_n.add_cartesian_analysis(robot_type=self.robot_type) 
         except:
             print("failed to load refined trajectory")
 
@@ -75,27 +76,27 @@ class Plot:
         try:
             self.original_dmp = TrajectoryStock()
             self.original_dmp.import_from_dmp_joint_trajectory("filter"+self.demo_name, t_scale=0)
-            self.original_dmp.add_cartesian_analysis()
+            self.original_dmp.add_cartesian_analysis(robot_type=self.robot_type)
 
             # self.scaled_dmp = TrajectoryStock()
             # self.scaled_dmp.import_from_dmp_joint_trajectory("scaled"+self.demo_name, t_scale=0)
-            # self.scaled_dmp.add_cartesian_analysis()
+            # self.scaled_dmp.add_cartesian_analysis(robot_type=self.robot_type)
 
             self.smooth_dmp = TrajectoryStock()
             self.smooth_dmp.import_from_dmp_joint_trajectory("smooth"+self.demo_name, t_scale=0)
-            self.smooth_dmp.add_cartesian_analysis() 
+            self.smooth_dmp.add_cartesian_analysis(robot_type=self.robot_type) 
 
             self.original_dmp_n = TrajectoryStock()
             self.original_dmp_n.import_from_dmp_joint_trajectory("filter"+self.demo_name, t_scale=1)
-            self.original_dmp_n.add_cartesian_analysis()
+            self.original_dmp_n.add_cartesian_analysis(robot_type=self.robot_type)
 
             # self.scaled_dmp_n = TrajectoryStock()
             # self.scaled_dmp_n.import_from_dmp_joint_trajectory("scaled"+self.demo_name, t_scale=1)
-            # self.scaled_dmp_n.add_cartesian_analysis()
+            # self.scaled_dmp_n.add_cartesian_analysis(robot_type=self.robot_type)
 
             self.smooth_dmp_n = TrajectoryStock()
             self.smooth_dmp_n.import_from_dmp_joint_trajectory("smooth"+self.demo_name, t_scale=1)
-            self.smooth_dmp_n.add_cartesian_analysis() 
+            self.smooth_dmp_n.add_cartesian_analysis(robot_type=self.robot_type) 
 
         except:
             print("failed to load dmp trajectory")
@@ -103,11 +104,11 @@ class Plot:
     def refinement_phase(self):
         tol_an = ToleranceAnalysis()
         tol_an.import_data("smooth" + demo_name)
-        tol_an.plot_traj_with_tols(self.refined_traj)
-        tol_an.plot_x_with_tols(self.refined_traj)
-        tol_an.plot_t_s_command()
+        # tol_an.plot_traj_with_tols(self.refined_traj)
+        # tol_an.plot_x_with_tols(self.refined_traj)
+        # tol_an.plot_t_s_command()
         tol_an.plot_waypoints(self.smooth_traj.ts[-1], self.refined_traj.ts[-1])
-        tol_an.plot_tols_only()
+        # tol_an.plot_tols_only()
 
     def jerk_analysis(self):
         jerk_analysis = JerkAnalysis()
@@ -122,8 +123,10 @@ class Plot:
     def dmp_analysis(self):
         dmp_an = DMPAnalysis()
         dmp_an.plot_3d(self.original_dmp, self.smooth_dmp)
-        dmp_an.plot_vel_acc_kin_lims(self.scaled_dmp, self.smooth_dmp)
-        dmp_an.plot_compare_jerks(self.scaled_dmp,self.smooth_dmp)
+        # dmp_an.plot_vel_acc_kin_lims(self.scaled_dmp, self.smooth_dmp)
+        # dmp_an.plot_compare_jerks(self.scaled_dmp,self.smooth_dmp)
+
+
         # dmp_an.plot_abs_jerk(self.original_dmp, self.smooth_dmp, self.scaled_dmp)
         # dmp_an.plot_with_kin_lims(self.scaled_dmp)
         # dmp_an.plot_with_kin_lims(self.smooth_dmp)
@@ -135,6 +138,28 @@ class Plot:
         return traj.ts[-1]
     
 
+def print_demo_info(demo_names):
+    for demo_name in demo_names:
+        plot = Plot(demo_name, robot_type="yumi_l")
+        
+        print(f"Demo: {demo_name}")
+        print("original_traj duration", plot.duration(plot.original_traj))
+        print("smooth_traj duration", plot.duration(plot.smooth_traj))
+        print("original_traj MANJ", plot.max_abs_jerk(plot.original_traj_n))
+        print("smooth_traj MANJ", plot.max_abs_jerk(plot.smooth_traj_n))
+        print("original_dmp MANJ", plot.max_abs_jerk(plot.original_dmp_n))
+        print("smooth_dmp MANJ", plot.max_abs_jerk(plot.smooth_dmp_n))
+        print(plot.max_abs_jerk(plot.original_traj_n), plot.max_abs_jerk(plot.smooth_traj_n),
+              plot.max_abs_jerk(plot.original_dmp_n), plot.max_abs_jerk(plot.smooth_dmp_n))
+        print()
+        # print in this format: plot.duration(plot.original_traj) & \textbf{plot.duration(plot.smooth_traj)} & & plot.duration(plot.original_traj) & \textbf{plot.duration(plot.smooth_traj)}
+        print(f"{plot.duration(plot.original_traj):.2f} & {plot.duration(plot.smooth_traj):.2f} &  & {plot.duration(plot.original_traj):.2f} & {plot.duration(plot.smooth_dmp):.2f}")
+        print(f"{plot.max_abs_jerk(plot.original_traj_n):.2f} & {plot.max_abs_jerk(plot.smooth_traj_n):.2f} &  & {plot.max_abs_jerk(plot.original_dmp_n):.2f} & {plot.max_abs_jerk(plot.smooth_dmp_n):.2f}")
+        print()
+
+
+
+
 if __name__ == '__main__':
 
     rospy.init_node('icra24')
@@ -144,26 +169,30 @@ if __name__ == '__main__':
 
     plot = Plot(demo_name)
 
-    # print("original_traj MANJ", plot.max_abs_jerk(plot.original_traj_n))
-    # print("smooth_traj MANJ", plot.max_abs_jerk(plot.smooth_traj_n))
-    print("original_traj duration", plot.duration(plot.original_traj))
-    print("smooth_traj duration", plot.duration(plot.smooth_traj))
+    # demo_names_reaching = ["picknplace0", "picknplaceee0", "frreachone0", "frreachtwo0",
+    #                 "frreachfour0", "frreachfive0",
+    #                  "frreachsix0", "frreachseven0", "frreacheight0",
+    #                  "frreachnine0", "frreachten0"]
 
-    print("original_traj MANJ", plot.max_abs_jerk(plot.original_traj_n))
-    print("smooth_traj MANJ", plot.max_abs_jerk(plot.smooth_traj_n))
-    print("original_dmp MANJ", plot.max_abs_jerk(plot.original_dmp_n))
-    # print("scaled_dmp MANJ", plot.max_abs_jerk(plot.scaled_dmp_n))
-    print("smooth_dmp MANJ", plot.max_abs_jerk(plot.smooth_dmp_n))
-    print(plot.max_abs_jerk(plot.original_traj_n), plot.max_abs_jerk(plot.smooth_traj_n)
-          , plot.max_abs_jerk(plot.original_dmp_n), plot.max_abs_jerk(plot.smooth_dmp_n))
+    # demo_names_moving = ["frplace0","frmoveone0", "frmovetwo0", "frmovethree0",
+    #                       "frmovefour0", "frmovefive0", "frmovesix0",
+    #                         "frmoveeight0", "frmovenine0", "frmoveten0"]
+    
+    # demo_names = ["picknplace0","picknplaceee0", "frreachfive0", "frreachsix0",
+    #                       "frreacheight0", "frplace0", "frmoveone0",
+    #                         "frmovefive0", "frmovesix0", "frmoveten0"]
+
+    # demo_names_yumi = ["ylhometoscrew0","ylscrewmount0", "ylscrewtoring0", "ylringmount0"]
+    
+    # print_demo_info(demo_names_yumi)
+
+    # plot.original_traj.cartesian.plot()
     
     
-    # print("original_dmp duration", plot.duration(plot.original_dmp))
-    # print("smooth_dmp duration", plot.duration(plot.smooth_dmp))
+    plot.original_traj.plot()
 
-
-
-
+    # plot.refinement_phase()
+    # plot.dmp_analysis()
 
     # if plot_arg == "dmp":
     #     plot.dmp_analysis()

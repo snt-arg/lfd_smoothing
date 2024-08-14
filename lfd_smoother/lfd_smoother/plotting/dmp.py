@@ -116,7 +116,7 @@ class DMPAnalysis:
         
         colors = ['r', 'r', 'r', 'r', 'r', 'r', 'r']
         
-        fig, axes = plt.subplots(2, 2, figsize=(7, 4))
+        fig, axes = plt.subplots(2, 2, figsize=(14, 8))
         
         for idx, name in enumerate(['vel [rad/s]', 'accl [rad/s${}^2$]']):
             for plot_row, (dmp, ts) in enumerate([(scaled_dmp, ts_scaled), (smooth_dmp, ts_smooth)]):
@@ -133,32 +133,35 @@ class DMPAnalysis:
                     
                     # Highlight Violations
                     above_limit = np.where(values[:, i] > limit)
-                    ax.scatter(ts[above_limit], values[above_limit, i], label="violation", color=color, marker='o' , s=10,  zorder=3, alpha=0.7)
+                    ax.scatter(ts[above_limit], values[above_limit, i], label="violation", color=color, marker='o' , s=30,  zorder=3, alpha=0.7)
                     
                     # plot_color = colors[i] if above_limit[0].size > 0 else 'royalblue'
                     plot_color = 'royalblue'
 
-                    ax.plot(ts, values[:, i], linestyle="-", label="trajectory",  linewidth=1.5, color=plot_color, alpha=0.7)
+                    ax.plot(ts, values[:, i], linestyle="-", label="trajectory",  linewidth=2, color=plot_color, alpha=0.7)
                     ax.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+                    ax.grid(True, linestyle='--', alpha=0.6)
 
                     
 
-        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5, fontsize=12)
-        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3, fontsize=12)
-        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5, fontsize=12)
-        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5, fontsize=12)
+        axes[0, 0].set_ylabel('$\dot{q}_{s,dmp}$ [rad/s]' , labelpad=-5, fontsize=26)
+        axes[0, 1].set_ylabel('$\ddot{q}_{s,dmp}$ [rad/s${}^2$]', labelpad=-3, fontsize=26)
+        axes[1, 0].set_ylabel('$\dot{q}_{f,dmp}$ [rad/s]', labelpad=-5, fontsize=26)
+        axes[1, 1].set_ylabel('$\ddot{q}_{f,dmp}$ [rad/s${}^2$]', labelpad=-5, fontsize=26)
 
-        axes[1, 0].set_xlabel('Time [s]', fontsize=11)
-        axes[1, 1].set_xlabel('Time [s]', fontsize=11)
+        axes[1, 0].set_xlabel('Time [s]', fontsize=22)
+        axes[1, 1].set_xlabel('Time [s]', fontsize=22)
 
         handles, labels = axes[0,1].get_legend_handles_labels()
 
         # Use a dictionary to remove duplicates
         unique = {label: handle for handle, label in zip(handles, labels)}
 
-        plt.legend(unique.values(), unique.keys(), loc='upper right', fontsize=9, markerscale=1)
-        plt.tight_layout()
-        plt.show()
+        plt.legend(unique.values(), unique.keys(), loc='upper right', fontsize=16, markerscale=1)
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        fig_filename = f'/tmp/dmp_kin.pdf'
+        plt.savefig(fig_filename)
+        plt.close()  # Close the figure to free up memory
 
 
     def plot_compare_jerks(self, scaled_dmp, smooth_dmp):
@@ -170,39 +173,60 @@ class DMPAnalysis:
             "Smooth DMP $\dddot{q}$ [rad/s${}^3$]": smooth_dmp.yddds
         }
 
-        fig, ax1 = plt.subplots(1, 1, figsize=(7, 4))
-        ax2 =  ax1.twinx()
+        fig, ax1 = plt.subplots(1, 1, figsize=(10, 6))
+        ax2 = ax1.twinx()
+
         color1 = "steelblue"
-        color2 = (0.5, 0.0, 0.0)
+        color2 = "darkred"
+
         for label, values in data.items():
             for dof in range(values.shape[1]):
                 if label.startswith('Scaled'):
-                    ax1.plot(ts_scaled, values[:, dof], color=color1, linestyle="-", linewidth=2, alpha=0.7)
+                    ax1.plot(ts_scaled, values[:, dof], color=color1, linestyle="-", linewidth=2, alpha=0.5)
                     ax1.tick_params(axis='y', labelcolor=color1)
-                    ax1.set_ylim(-1000, 1000)
-                else: # Smooth
-                    ax2.plot(ts_smooth, values[:, dof], color=color2, linewidth=2,  alpha=0.6)
+                    # for picknplace
+                    # ax1.set_ylim(-480, 480)
+                    ax1.set_ylim(-800, 800)
+
+                else:  # Smooth
+                    ax2.plot(ts_smooth, values[:, dof], color=color2, linewidth=2, alpha=0.7)
                     ax2.tick_params(axis='y', labelcolor=color2)
-                    ax2.set_ylim(-250, 250)
+                    ax2.set_ylim(-300, 300)
+
 
         y_max_scaled = np.max(scaled_dmp.yddds)
         y_min_scaled = np.min(scaled_dmp.yddds)
         y_max_smooth = np.max(smooth_dmp.yddds)
         y_min_smooth = np.min(smooth_dmp.yddds)
 
+        # Annotations for max and min values
         ax1.axhline(y=y_max_scaled, color=color1, linestyle='--') 
-        ax1.text(0.6, y_max_scaled - 50, f'Maximum: {y_max_scaled:.2f}', color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc=color1, alpha=0.3))
+        # ax1.text(ts_scaled[int(len(ts_scaled)*0.8)], y_max_scaled - 55, f'Max: {y_max_scaled:.2f}', color="black", verticalalignment='bottom', bbox=dict(boxstyle="round", fc=color1, alpha=0.5), fontsize=14)
+        ax1.text(ts_scaled[int(len(ts_scaled)*0.8)], y_max_scaled - 100, f'Max: {y_max_scaled:.2f}', color="black", verticalalignment='bottom', bbox=dict(boxstyle="round", fc=color1, alpha=0.5), fontsize=14)
         ax1.axhline(y=y_min_scaled, color=color1, linestyle='--') 
-        ax1.text(0.6, y_min_scaled + 55, f'Minimum: {y_min_scaled:.2f}', color="black", verticalalignment='bottom', bbox = dict(boxstyle="round", fc=color1, alpha=0.3))
+        # ax1.text(ts_scaled[int(len(ts_scaled)*0.8)], y_min_scaled + 55, f'Min: {y_min_scaled:.2f}', color="black", verticalalignment='top', bbox=dict(boxstyle="round", fc=color1, alpha=0.5), fontsize=14)
+        ax1.text(ts_scaled[int(len(ts_scaled)*0.8)], y_min_scaled -40, f'Min: {y_min_scaled:.2f}', color="black", verticalalignment='top', bbox=dict(boxstyle="round", fc=color1, alpha=0.5), fontsize=14)
 
-        ax2.text(0.6, y_max_smooth + 20 , f'Maximum: {y_max_smooth:.2f}', color="black", verticalalignment='bottom', bbox = dict(boxstyle="round", fc=color2, alpha=0.3))
         ax2.axhline(y=y_max_smooth, color=color2, linestyle='--') 
+        ax2.text(ts_smooth[int(len(ts_smooth)*0.8)], y_max_smooth + 15, f'Max: {y_max_smooth:.2f}', color="black", verticalalignment='bottom', bbox=dict(boxstyle="round", fc=color2, alpha=0.5), fontsize=14)
         ax2.axhline(y=y_min_smooth, color=color2, linestyle='--') 
-        ax2.text(0.6, y_min_smooth - 20, f'Minimum: {y_min_smooth:.2f}', color="black", verticalalignment='top', bbox = dict(boxstyle="round", fc=color2, alpha=0.3))
+        ax2.text(ts_smooth[int(len(ts_smooth)*0.8)], y_min_smooth - 15, f'Min: {y_min_smooth:.2f}', color="black", verticalalignment='top', bbox=dict(boxstyle="round", fc=color2, alpha=0.5), fontsize=14)
 
-        ax1.set_ylabel("$\dddot{q}_{s,dmp}$ [rad/s${}^3$]", labelpad=-4, color=color1, fontsize=14)
-        ax2.set_ylabel("$\dddot{q}_{f,dmp}$ [rad/s${}^3$]", labelpad=4, color=color2, fontsize=14)
-        ax1.set_xlabel('Time [s]', labelpad=0, fontsize=12)
-        
-        plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
-        plt.show()
+        ax1.set_ylabel("$\dddot{q}_{s,dmp}$ [rad/s${}^3$]", labelpad=10, color=color1, fontsize=24)
+        ax2.set_ylabel("$\dddot{q}_{f,dmp}$ [rad/s${}^3$]", labelpad=10, color=color2, fontsize=24)
+        ax1.set_xlabel('Time [s]', labelpad=10, fontsize=20)
+
+        # Add gridlines for better readability
+        ax1.grid(True, which='both', linestyle='--', linewidth=0.5)
+        ax2.grid(False)  # to avoid overlapping grids
+
+        # Add a legend to clarify which plot corresponds to which data set
+        lines, labels = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+        # plt.title('Comparison of Scaled and Smooth DMP Jerks', fontsize=16, pad=15)
+        plt.tight_layout()
+        fig_filename = f'/tmp/dmp_jerk.pdf'
+        plt.savefig(fig_filename)
+        plt.close()  # Close the figure to free up memory

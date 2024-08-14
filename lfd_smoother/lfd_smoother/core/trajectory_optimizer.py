@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 from datetime import datetime
+import seaborn as sns
 
 from pydrake.all import *
 from manipulation.meshcat_utils import PublishPositionTrajectory
@@ -12,7 +13,7 @@ class TrajectoryOptimizer:
         self.robot = robot
         self.config = config
 
-    def run(self):
+    def run(self, tag="opt"):
         if self.config.demo is not None: self.input_demo()
         self.init_trajopts()
         self.add_pos_bounds()
@@ -31,7 +32,7 @@ class TrajectoryOptimizer:
         if self.config.init_guess_cps is not None: self.set_init_guess_cps(self.config.init_guess_cps)
         self.solve()
         result_traj = self.compile_trajectory()
-        if self.config.doplot is True: self.plot_trajectory(result_traj)
+        if self.config.doplot is True: self.plot_trajectory(result_traj, tag)
         return result_traj
 
 
@@ -270,7 +271,72 @@ class TrajectoryOptimizer:
             [result.GetSolution(trajopt.control_points())[:,i,np.newaxis] for i in range(self.config.num_control_points)])
 
 
-    def plot_trajectory(self, composite_traj):
+    def plot_trajectory(self, composite_traj, tag = "opt"):
+        plt.rcParams['pdf.fonttype'] = 42
+        plt.rcParams['ps.fonttype'] = 42
+        plt.rcParams['mathtext.default'] = 'regular'
+
+        PublishPositionTrajectory(
+            composite_traj, self.robot.context, self.robot.plant, self.robot.visualizer
+        )
+        self.robot.collision_visualizer.ForcedPublish(
+            self.robot.collision_visualizer.GetMyContextFromRoot(self.robot.context)
+        )
+
+        ts = np.linspace(0, composite_traj.end_time(), 1000)
+        if tag == "opt1":
+            data = {
+                "${q}_t$ [rad]": [],
+                "$\dot{q}_t$ [rad/s]": [],
+                "$\ddot{q}_t$ [rad/s${}^2$]": [],
+                "$\dddot{q}_t$ [rad/s${}^3$]": []
+            }
+            for t in ts:
+                data["${q}_t$ [rad]"].append(composite_traj.value(t))
+                data["$\dot{q}_t$ [rad/s]"].append(composite_traj.MakeDerivative().value(t))
+                data["$\ddot{q}_t$ [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
+                data["$\dddot{q}_t$ [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
+
+        elif tag == "opt2":
+            data = {
+                "${q}_f$ [rad]": [],
+                "$\dot{q}_f$ [rad/s]": [],
+                "$\ddot{q}_f$ [rad/s${}^2$]": [],
+                "$\dddot{q}_f$ [rad/s${}^3$]": []
+            }
+        
+            for t in ts:
+                data["${q}_f$ [rad]"].append(composite_traj.value(t))
+                data["$\dot{q}_f$ [rad/s]"].append(composite_traj.MakeDerivative().value(t))
+                data["$\ddot{q}_f$ [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
+                data["$\dddot{q}_f$ [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
+
+        # Set a consistent style
+        sns.set(style="whitegrid")
+        color_palette = sns.color_palette("tab10")
+        
+        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+        axs = axs.ravel()
+
+        for idx, (label, values) in enumerate(data.items()):
+            axs[idx].plot(ts, np.array(values).squeeze(axis=2))
+            # axs[idx].set_title(label)
+            axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+            axs[idx].set_ylabel(label, labelpad=10, fontsize=23)
+            axs[idx].grid(True)
+            
+            if idx >= 2:  # Only set x-label for the bottom subplots
+                axs[idx].set_xlabel('time [s]', labelpad=10, fontsize=12)
+            
+        plt.tight_layout(pad=0.5, w_pad=0.1, h_pad=0.1)
+        fig_filename = f'/tmp/{tag}.pdf'
+        plt.savefig(fig_filename)
+        plt.close(fig)
+        # plt.show()
+
+
+
+    def plot_trajectory_individually(self, composite_traj, tag = "opt"):
         plt.rcParams['pdf.fonttype'] = 42
         plt.rcParams['ps.fonttype'] = 42
         plt.rcParams['mathtext.default'] = 'regular'
@@ -290,30 +356,45 @@ class TrajectoryOptimizer:
             "$\ddot{q}_f$ [rad/s${}^2$]": [],
             "$\dddot{q}_f$ [rad/s${}^3$]": []
         }
-        
+
         for t in ts:
             data["${q}_f$ [rad]"].append(composite_traj.value(t))
             data["$\dot{q}_f$ [rad/s]"].append(composite_traj.MakeDerivative().value(t))
             data["$\ddot{q}_f$ [rad/s${}^2$]"].append(composite_traj.MakeDerivative(2).value(t))
             data["$\dddot{q}_f$ [rad/s${}^3$]"].append(composite_traj.MakeDerivative(3).value(t))
         
-        fig, axs = plt.subplots(2, 2, figsize=(5,4))
-        axs = axs.ravel()
+        num_joints = len(data["${q}_f$ [rad]"][0])  # Assuming ys, yds, ydds, yddds are lists of arrays
+        
+        # Set a consistent style
+        sns.set(style="whitegrid")
+        color_palette = sns.color_palette("tab10")
 
-        for idx, (label, values) in enumerate(data.items()):
-            axs[idx].plot(ts, np.array(values).squeeze(axis=2))
-            # axs[idx].set_title(label)
-            axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-            axs[idx].set_ylabel(label, labelpad=-4, fontsize=12)
-            
-            if idx >= 2:  # Only set x-label for the bottom subplots
-                axs[idx].set_xlabel('time [s]', labelpad=0)
-            
-        plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
-        current_datetime = datetime.now().strftime('%Y%m%d%H%M%S')
-        filename = '/tmp/' + f'output_optimizer_{current_datetime}.svg'
-        plt.savefig(filename, format='svg')
-        plt.show()
+        joint_labels = [f'joint{idx + 1}' for idx in range(num_joints)]
+
+        for joint_idx in range(num_joints):
+            fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+            axs = axs.ravel()
+
+            for idx, (label, values) in enumerate(data.items()):
+                axs[idx].plot(ts, np.array(values)[:, joint_idx], color=color_palette[idx], label=joint_labels[joint_idx])
+                axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+                axs[idx].set_ylabel(label, labelpad=10, fontsize=12)
+                # axs[idx].set_title(label, fontsize=14)
+                axs[idx].grid(True)
+                
+                if idx >= 2:  # Only set x-label for the bottom subplots
+                    axs[idx].set_xlabel('time [s]', labelpad=10, fontsize=12)
+
+                axs[idx].legend(loc="best", fontsize=10)
+
+            # fig.suptitle(f'Joint {joint_idx + 1} Profiles', fontsize=16)
+            plt.tight_layout(pad=0.5, w_pad=0.1, h_pad=0.1)
+            # plt.subplots_adjust(top=0.8)  # Adjust the top padding to fit the suptitle
+            # plt.show() 
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            fig_filename = f'/home/abrk/Desktop/figs/opt/joint_{joint_idx + 1}_{tag}.pdf'
+            plt.savefig(fig_filename)
+            plt.close(fig)  # Close the figure to free up memory
 
 
     # def plot_trajectory(self, composite_traj):

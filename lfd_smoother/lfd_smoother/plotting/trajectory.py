@@ -3,11 +3,12 @@ import rospy
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
+import seaborn as sns
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from pydrake.all import *
-from lfd_smoother.util.robot import FR3Drake
+from lfd_smoother.util.robot import FR3Drake, YumiDrake
 
 from lfd_storage.smoother_storage import SmootherStorage
 
@@ -21,6 +22,8 @@ class TrajectoryStock:
     def __init__(self):
         self.positions = None # To be filled later by Cartesian Analysis
         self.velocities = None # To be filled later by Cartesian Analysis
+        self.accelerations = None # To be filled later by Cartesian Analysis
+        self.jerks = None # To be filled later by Cartesian Analysis
 
     def import_from_lfd_storage(self,name, t_scale=0):
         self.storage = SmootherStorage(name)
@@ -124,7 +127,7 @@ class TrajectoryStock:
     def normalize_t(self):
         self.ss = self.ts / self.ts[-1]
 
-    def plot(self):
+    def plot(self, save_path='/tmp'):
 
         ts = self.ts
         
@@ -135,20 +138,70 @@ class TrajectoryStock:
             "$\dddot{q}_o$ [rad/s${}^3$]": self.yddds
         }
         
-        fig, axs = plt.subplots(2, 2, figsize=(5,4))
+        fig, axs = plt.subplots(2, 2, figsize=(12,8))
         axs = axs.ravel()
+
+        # Set a consistent style
+        sns.set(style="whitegrid")
+        color_palette = sns.color_palette("tab10")
 
         for idx, (label, values) in enumerate(data.items()):
             axs[idx].plot(ts, np.array(values))
             # axs[idx].set_title(label)
             axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-            axs[idx].set_ylabel(label, labelpad=-4, fontsize=12)
-            
+            axs[idx].set_ylabel(label, labelpad=10, fontsize=23)
+            axs[idx].grid(True)
+
             if idx >= 2:  # Only set x-label for the bottom subplots
-                axs[idx].set_xlabel('time [s]', labelpad=0)
+                axs[idx].set_xlabel('time [s]', labelpad=10, fontsize=12)
             
-        plt.tight_layout(pad=1.0, w_pad=0.5, h_pad=0.5)
-        plt.show()
+        plt.tight_layout(pad=0.5, w_pad=0.1, h_pad=0.1)
+        fig_filename = f'{save_path}/org.pdf'
+        plt.savefig(fig_filename)
+        plt.close(fig)
+
+    def plot_individually(self, save_path='/tmp/'):
+        ts = self.ts
+
+        data = {
+            "${q}_o$ [rad]": self.ys,
+            "$\dot{q}_o$ [rad/s]": self.yds,
+            "$\ddot{q}_o$ [rad/s${}^2$]": self.ydds,
+            "$\dddot{q}_o$ [rad/s${}^3$]": self.yddds
+        }
+
+        num_joints = len(self.ys[0])  # Assuming ys, yds, ydds, yddds are lists of arrays
+        
+        # Set a consistent style
+        sns.set(style="whitegrid")
+        color_palette = sns.color_palette("tab10")
+
+        joint_labels = [f'joint{idx + 1}' for idx in range(num_joints)]
+
+        for joint_idx in range(num_joints):
+            fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+            axs = axs.ravel()
+
+            for idx, (label, values) in enumerate(data.items()):
+                axs[idx].plot(ts, np.array(values)[:, joint_idx], color=color_palette[idx], label=joint_labels[joint_idx])
+                axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+                axs[idx].set_ylabel(label, labelpad=10, fontsize=12)
+                # axs[idx].set_title(label, fontsize=14)
+                axs[idx].grid(True)
+                
+                if idx >= 2:  # Only set x-label for the bottom subplots
+                    axs[idx].set_xlabel('time [s]', labelpad=10, fontsize=12)
+
+                axs[idx].legend(loc="best", fontsize=10)
+
+            # fig.suptitle(f'Joint {joint_idx + 1} Profiles', fontsize=16)
+            plt.tight_layout(pad=0.5, w_pad=0.1, h_pad=0.1)
+            # plt.subplots_adjust(top=0.8)  # Adjust the top padding to fit the suptitle
+            # plt.show() 
+            fig_filename = f'{save_path}/joint_{joint_idx + 1}_org.pdf'
+            plt.savefig(fig_filename)
+            plt.close(fig)  # Close the figure to free up memory
+        
 
     def to_joint_trajectory(self, withvelacc=True):
         joint_trajectory = JointTrajectory()
@@ -170,19 +223,25 @@ class TrajectoryStock:
         
         return joint_trajectory
     
-    def add_cartesian_analysis(self):
-        self.cartesian = CartesianAnalysis()
+    def add_cartesian_analysis(self, robot_type="fr3"):
+        self.cartesian = CartesianAnalysis(robot_type=robot_type)
         self.cartesian.from_trajectory(self)
         return self.cartesian
 
 
 class CartesianAnalysis:
 
-    def __init__(self) -> None:
-        self.robot = FR3Drake(pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/franka_drake/package.xml",
-                urdf_path="package://franka_drake/urdf/fr3_nohand.urdf")
-        self.visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
-        self.ee_body = self.robot.plant.GetBodyByName("fr3_link8")
+    def __init__(self, robot_type="fr3") -> None:
+        if robot_type == "yumi_l":
+            self.robot = YumiDrake(pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/yumi_drake/package.xml",
+                    urdf_path="package://yumi_drake/urdf/yumi_left.urdf")
+            self.visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
+            self.ee_body = self.robot.plant.GetBodyByName("yumi_link_7_l")
+        elif robot_type == "fr3":
+            self.robot = FR3Drake(pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/franka_drake/package.xml",
+                    urdf_path="package://franka_drake/urdf/fr3_nohand.urdf")
+            self.visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
+            self.ee_body = self.robot.plant.GetBodyByName("fr3_link8")
 
     def to_position(self, q):
         self.robot.plant.SetPositions(self.robot.plant_context, q)
@@ -216,30 +275,50 @@ class CartesianAnalysis:
         self.velocities = np.array(self.velocities)
         traj.positions = self.positions
         traj.velocities = self.velocities
+
+        times = np.array(traj.ts)
+        self.accelerations = np.gradient(self.velocities, times)
+        self.jerks = np.gradient(self.accelerations, times)
+        traj.accelerations = self.accelerations
+        traj.jerks = self.jerks
     
     
-    def plot(self):
-        # Make subplots for X, Y, Z, and V
-        fig, axs = plt.subplots(4)
-        
-        # plot x, y, z
-        axs[0].plot(self.ts, self.positions[:, 0]) # plot x
-        axs[0].set_title('X coordinate')
-        axs[1].plot(self.ts, self.positions[:, 1]) # plot y
-        axs[1].set_title('Y coordinate')
-        axs[2].plot(self.ts, self.positions[:, 2]) # plot z
-        axs[2].set_title('Z coordinate')
-        
-        # plot v
-        axs[3].plot(self.ts, self.velocities)
-        axs[3].set_title('V')
-        
-        # Set common labels
-        fig.text(0.5, 0.04, 'Time', ha='center', va='center')
-        fig.text(0.06, 0.5, 'Values', ha='center', va='center', rotation='vertical')
-        
-        plt.tight_layout()
-        plt.show() 
+    def plot(self, save_path='/tmp'):
+        ts = self.ts
+        # positions = self.positions
+        # print(positions.shape)
+        # velocities = np.gradient(self.positions, ts, axis=0)
+        # accelerations = np.gradient(velocities, ts, axis=0)
+        # jerks = np.gradient(accelerations, ts, axis=0)
+
+
+        data = {
+            "Position [units]": self.positions,
+            "Velocity [units/s]": self.velocities,
+            "Acceleration [units/s^2]": self.accelerations,
+            "Jerk [units/s^3]": self.jerks
+        }
+
+        fig, axs = plt.subplots(2, 2, figsize=(12, 12))
+        axs = axs.ravel()
+
+        # Set a consistent style
+        sns.set(style="whitegrid")
+        color_palette = sns.color_palette("tab10")
+
+        for idx, (label, values) in enumerate(data.items()):
+            axs[idx].plot(ts, np.array(values), color=color_palette[idx])
+            axs[idx].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+            axs[idx].set_ylabel(label, labelpad=10, fontsize=12)
+            axs[idx].grid(True)
+
+            if idx >= 4:  # Only set x-label for the bottom subplots
+                axs[idx].set_xlabel('Time [s]', labelpad=10, fontsize=12)
+
+        plt.tight_layout(pad=0.5, w_pad=0.1, h_pad=0.1)
+        fig_filename = f'{save_path}/plot.pdf'
+        plt.savefig(fig_filename)
+        plt.close(fig)
 
 
     def plot_3d(self):
