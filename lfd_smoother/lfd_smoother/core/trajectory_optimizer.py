@@ -331,8 +331,8 @@ class TrajectoryOptimizer:
         plt.tight_layout(pad=0.5, w_pad=0.1, h_pad=0.1)
         fig_filename = f'/tmp/{tag}.pdf'
         plt.savefig(fig_filename)
+        plt.show()
         plt.close(fig)
-        # plt.show()
 
 
 
