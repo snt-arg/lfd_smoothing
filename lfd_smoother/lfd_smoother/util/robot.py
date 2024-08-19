@@ -89,10 +89,10 @@ class YumiDrake(DrakeRobot):
                   home_pos = None):
         
         if left_arm is True:
-            gripper_frame = gripper_frame or "yumi_link_7_l"
+            gripper_frame = gripper_frame or "gripper_l_tip"
             home_pos = home_pos or [0.0 , -2.26 , 2.36 , 0.52 , 0.0 , 0.7 , 0.0]            
         else:
-            gripper_frame = gripper_frame or "yumi_link_7_r"
+            gripper_frame = gripper_frame or "gripper_r_tip"
             home_pos = home_pos or [0.0 , -2.26 , -2.36 , 0.52 , 0.0 , 0.7 , 0.0]
         
         super().__init__(pkg_xml, urdf_path,base_frame, gripper_frame, home_pos)

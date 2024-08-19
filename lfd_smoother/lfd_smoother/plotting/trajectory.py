@@ -236,7 +236,7 @@ class CartesianAnalysis:
             self.robot = YumiDrake(pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/yumi_drake/package.xml",
                     urdf_path="package://yumi_drake/urdf/yumi_left.urdf")
             self.visualizer_context = self.robot.visualizer.GetMyContextFromRoot(self.robot.context)
-            self.ee_body = self.robot.plant.GetBodyByName("yumi_link_7_l")
+            self.ee_body = self.robot.plant.GetBodyByName("gripper_l_tip")
         elif robot_type == "fr3":
             self.robot = FR3Drake(pkg_xml="/home/abrk/catkin_ws/src/lfd/lfd_smoothing/drake/franka_drake/package.xml",
                     urdf_path="package://franka_drake/urdf/fr3_nohand.urdf")

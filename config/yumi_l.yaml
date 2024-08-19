@@ -9,6 +9,6 @@ robot_type: "yumi_l"
 ik_solver_config: {
 pkg_xml: $(find lfd_smoothing)/drake/yumi_drake/package.xml,
 urdf_path: package://yumi_drake/urdf/yumi_left.urdf,
-ee_frame: yumi_link_7_l,
+ee_frame: gripper_l_tip,
 robot_type: "yumi_l"
 }
