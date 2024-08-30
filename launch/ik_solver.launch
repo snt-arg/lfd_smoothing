@@ -2,8 +2,9 @@
 
     <arg name="robot_type" default="fr3"/> 
 
-    <node name="ik_solver" pkg="lfd_smoothing" type="ik_solver_ros.py" output="screen">
+    <node name="ik_solver_$(arg robot_type)" pkg="lfd_smoothing" type="ik_solver_ros.py" output="screen">
         <rosparam command="load" file="$(find lfd_smoothing)/config/$(arg robot_type).yaml" subst_value="true" />
+        <param name="robot_ns" value="$(arg robot_type)" />
     </node>
 
 </launch>

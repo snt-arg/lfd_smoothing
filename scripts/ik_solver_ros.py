@@ -14,9 +14,9 @@ from lfd_smoothing.srv import IKService, IKServiceResponse
 from lfd_smoother.util.ik_solver import IKSolver
 
 class IKServer:
-    def __init__(self, name):
+    def __init__(self, robot_ns, name):
         self.ik_flag = False
-        self.service = rospy.Service(name, IKService, self.handle_request)
+        self.service = rospy.Service(f"{robot_ns}/{name}", IKService, self.handle_request)
         ik_solver_config = rospy.get_param("~ik_solver_config")
         self.solver = IKSolver(ik_solver_config)
     
@@ -61,13 +61,13 @@ class PlanPoseActionServer:
     _feedback =  PlanPoseFeedback()
     _result = PlanPoseResult()
 
-    def __init__(self, name, ik_server):
-        self.action_name = name
+    def __init__(self,robot_ns, name, ik_server):
+        self.action_name = f"{robot_ns}/{name}"
         self.ik_server = ik_server
         self._as_planpose = actionlib.SimpleActionServer(self.action_name, 
                                                 PlanPoseAction, execute_cb=self.execute_cb, 
                                                 auto_start = False)
-        self._ac_planjoint = actionlib.SimpleActionClient("/plan_joint", PlanJointAction)
+        self._ac_planjoint = actionlib.SimpleActionClient(f"{robot_ns}/plan_joint", PlanJointAction)
         self._ac_planjoint.wait_for_server()
         
         self.ik_flag = False
@@ -99,8 +99,10 @@ if __name__ == '__main__':
 
     rospy.init_node('ik_solver')
 
-    ik_server = IKServer('/ik_service')
-    planpose = PlanPoseActionServer("/plan_pose", ik_server)
+    robot_ns = rospy.get_param("~robot_ns")
+
+    ik_server = IKServer(robot_ns, 'ik_service')
+    planpose = PlanPoseActionServer(robot_ns, "plan_pose", ik_server)
 
     r =rospy.Rate(50)
     while not rospy.is_shutdown():
