@@ -56,7 +56,7 @@ class IKSolver:
         self.prog = self.ik_solver.get_mutable_prog()
 
         delta_q = self.ik_solver.q() - q0
-        for q in delta_q:
+        for q in delta_q[:-1]:
             self.prog.AddCost(pow(q,2))
 
 
