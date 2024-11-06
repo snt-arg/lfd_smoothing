@@ -1,0 +1,15 @@
+<launch>
+
+    <arg name="demo_name" default="picknplace"/>
+    <arg name="working_dir" value="$(find lfd_smoothing)/data" />
+    <arg name="correction" default="false" />
+    <arg name="robot_type" default="fr3"/> 
+
+
+    <include file="$(find lfd_interface)/launch/lfd_storage.launch"/>
+
+    <node name="cartesian_planner" pkg="lfd_smoothing" type="cartesian.py" output="screen">
+        <rosparam command="load" file="$(find lfd_smoothing)/config/$(arg robot_type).yaml" subst_value="true" />
+    </node>
+
+</launch>
