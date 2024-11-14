@@ -1,10 +1,7 @@
 # lfd_smoothing
-Implementation of Optimization-based smoothing techniques for Learning from Demonstration
 
-# Related Papers
+This repository is part of the broader Main Repository [DFL-TORO: A One-Shot Demonstration Framework for Learning Time-Optimal Robotic Manufacturing Tasks](https://github.com/snt-arg/dfl-toro), which contains all necessary components and installation instructions.
 
-### Learning to Pick at Non-Zero-Velocity from Interactive Demonstrations
-https://arxiv.org/abs/2110.04534
+## Overview
 
-### Analysis of Methods for Incremental Policy Refinement by Kinesthetic Guidance
-https://link.springer.com/article/10.1007/s10846-021-01328-y
+The main role of the this module is to take raw recorded demonstrations and convert them into optimal demonstration trajectories.
